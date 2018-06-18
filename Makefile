@@ -617,6 +617,20 @@ else
 KBUILD_CFLAGS	+= -O2
 endif
 
+
+# Extra kbuild cflags
+KBUILD_CFLAGS += $(call cc-option,-fno-store-merging,)
+
+# Disable MTK drivers warnings being flagged as errors
+KBUILD_CFLAGS += $(call cc-disable-warning,date-time)
+KBUILD_CFLAGS += $(call cc-disable-warning,duplicate-decl-specifier)
+KBUILD_CFLAGS	+= $(call cc-disable-warning,int-in-bool-context)
+KBUILD_CFLAGS += $(call cc-disable-warning,logical-not-parentheses)
+KBUILD_CFLAGS += $(call cc-disable-warning,misleading-indentation)
+KBUILD_CFLAGS += $(call cc-disable-warning,switch-bool)
+KBUILD_CFLAGS += $(call cc-disable-warning,unused-but-set-variable)
+
+
 # Tell gcc to never replace conditional load with a non-conditional one
 KBUILD_CFLAGS	+= $(call cc-option,--param=allow-store-data-races=0)
 
@@ -756,6 +770,9 @@ KBUILD_CFLAGS += $(call cc-disable-warning, pointer-sign)
 
 # disable invalid "can't wrap" optimizations for signed / pointers
 KBUILD_CFLAGS	+= $(call cc-option,-fno-strict-overflow)
+
+# Make sure -fstack-check isn't enabled (like gentoo apparently did)
+KBUILD_CFLAGS  += $(call cc-option,-fno-stack-check,)
 
 # conserve stack if available
 KBUILD_CFLAGS   += $(call cc-option,-fconserve-stack)

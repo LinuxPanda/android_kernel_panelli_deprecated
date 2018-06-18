@@ -1,3 +1,5 @@
+subdir-ccflags-y += -Wno-error=date-time
+
 ###add dtv ---shenyong@wind-mobi.com ---20161119 start 
 ccflags-y += -I$(srctree)/drivers/misc/mediatek/accelerometer/inc
 ccflags-y += -I$(srctree)/drivers/misc/mediatek/hwmon/include

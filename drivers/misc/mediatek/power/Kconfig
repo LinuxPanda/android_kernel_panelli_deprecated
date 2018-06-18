@@ -30,6 +30,11 @@ config MTK_FAN5405_SUPPORT
 	bool "MTK_FAN5405_SUPPORT"
 	select MTK_SWITCH_INPUT_OUTPUT_CURRENT_SUPPORT
 	default n
+	---help---
+	Mediatek TI FAN5405 driver.
+	Set y to support this driver.
+	Set n and choose other chargers.
+	This driver uses I2c bus.
 # zhanyoufei@wind-mobi.com 20161110 end
 	
 config MTK_BQ25898_DUAL_SUPPORT

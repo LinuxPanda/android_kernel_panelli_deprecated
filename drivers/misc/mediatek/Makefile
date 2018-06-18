@@ -40,11 +40,10 @@ obj-$(CONFIG_MTK_M4U)	+= m4u/
 obj-$(CONFIG_MTK_GPT_SCHEME_SUPPORT)	+= partition/
 obj-$(CONFIG_MTK_SYSENV)	+= sysenv/
 obj-$(CONFIG_MTK_PWM)	    += pwm/
+obj-$(CONFIG_MTK_HWMON)	    += hwmon/
 ifneq ($(CONFIG_MTK_SENSOR_BIO),y)
 ifeq ($(CONFIG_MTK_SENSOR_SUPPORT),y)
 obj-$(CONFIG_CUSTOM_KERNEL_SENSORHUB)	+= sensorHub/
-obj-$(CONFIG_MTK_HWMON)	    += hwmon/
-obj-$(CONFIG_MTK_CAM_CAL) += cam_cal/src/
 obj-$(CONFIG_CUSTOM_KERNEL_ALSPS) += alsps/
 obj-$(CONFIG_CUSTOM_KERNEL_ACCELEROMETER) += accelerometer/
 obj-$(CONFIG_CUSTOM_KERNEL_GYROSCOPE) += gyroscope/
@@ -130,6 +129,7 @@ obj-y += cameraisp/src/
 ifneq ($(CONFIG_MTK_IMGSENSOR),)
 obj-y+= imgsensor/src/
 endif
+obj-$(CONFIG_MTK_CAM_CAL) += cam_cal/src/
 obj-$(CONFIG_MTK_LENS)   += lens/
 obj-$(CONFIG_MTK_FLASHLIGHT)	+= flashlight/src/
 ifneq ($(wildcard $(srctree)/drivers/misc/mediatek/met/),)
