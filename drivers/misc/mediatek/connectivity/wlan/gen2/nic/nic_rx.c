@@ -658,8 +658,10 @@ VOID nicRxProcessDataPacket(IN P_ADAPTER_T prAdapter, IN OUT P_SW_RFB_T prSwRfb)
 					switch (prRetSwRfb->eDst) {
 					case RX_PKT_DESTINATION_HOST:
 #if ARP_MONITER_ENABLE
-					if (IS_STA_IN_AIS(prStaRec))
+					if (IS_STA_IN_AIS(prStaRec)) {
 						qmHandleRxArpPackets(prAdapter, prRetSwRfb);
+						qmHandleRxDhcpPackets(prAdapter, prRetSwRfb);
+					}
 #endif
 						nicRxProcessPktWithoutReorder(prAdapter, prRetSwRfb);
 						break;
@@ -796,7 +798,7 @@ UINT_8 nicRxProcessGSCNEvent(IN P_ADAPTER_T prAdapter, IN OUT P_SW_RFB_T prSwRfb
 			mtk_cfg80211_vendor_event_full_scan_results(wiphy,
 					prGlueInfo->prDevHandler->ieee80211_ptr,
 					prScanInfo->prGscnFullResult,
-					sizeof(PARAM_WIFI_GSCAN_FULL_RESULT) + ie_len);
+					offsetof(PARAM_WIFI_GSCAN_FULL_RESULT, ie_data) + ie_len);
 		}
 		break;
 
@@ -967,6 +969,12 @@ VOID nicRxProcessEventPacket(IN P_ADAPTER_T prAdapter, IN OUT P_SW_RFB_T prSwRfb
 		/* The FW indicates that an RX BA agreement has been deleted */
 		qmHandleEventRxDelBa(prAdapter, prEvent);
 		break;
+
+#if CFG_RX_BA_REORDERING_ENHANCEMENT
+	case EVENT_ID_BA_FW_DROP_SN:
+		qmHandleEventDropByFW(prAdapter, prEvent);
+		break;
+#endif
 
 	case EVENT_ID_LINK_QUALITY:
 #if CFG_ENABLE_WIFI_DIRECT && CFG_SUPPORT_P2P_RSSI_QUERY
@@ -1147,9 +1155,22 @@ VOID nicRxProcessEventPacket(IN P_ADAPTER_T prAdapter, IN OUT P_SW_RFB_T prSwRfb
 		P_EVENT_TX_DONE_T prTxDone;
 
 		prTxDone = (P_EVENT_TX_DONE_T) (prEvent->aucBuffer);
-		if (prTxDone->ucStatus)
+
+		if (prTxDone->ucStatus) {
 			DBGLOG(RX, INFO, "EVENT_ID_TX_DONE PacketSeq:%u ucStatus: %u SN: %u\n",
-					    prTxDone->ucPacketSeq, prTxDone->ucStatus, prTxDone->u2SequenceNumber);
+				prTxDone->ucPacketSeq, prTxDone->ucStatus, prTxDone->u2SequenceNumber);
+			if (prTxDone->ucStatus == TX_RESULT_FW_FLUSH)
+				prAdapter->ucFlushCount++;
+		} else
+			prAdapter->ucFlushCount = 0;
+
+		/*when Fw flushed continusous packages, driver do whole chip reset !*/
+		if (prAdapter->ucFlushCount >= RX_FW_FLUSH_PKT_THRESHOLD) {
+			DBGLOG(RX, ERROR, "FW flushed continusous packages :%d\n", prAdapter->ucFlushCount);
+			prAdapter->ucFlushCount = 0;
+			kalSendAeeWarning("[Fatal error! FW Flushed PKT too much!]", __func__);
+			glDoChipReset();
+		}
 
 		/* call related TX Done Handler */
 		prMsduInfo = nicGetPendingTxMsduInfo(prAdapter, prTxDone->ucPacketSeq);
@@ -1549,6 +1570,17 @@ VOID nicRxProcessEventPacket(IN P_ADAPTER_T prAdapter, IN OUT P_SW_RFB_T prSwRfb
 	case EVENT_ID_CHECK_REORDER_BUBBLE:
 		qmHandleEventCheckReorderBubble(prAdapter, prEvent);
 		break;
+#if (CFG_SUPPORT_EMI_DEBUG == 1)
+	case EVENT_ID_DRIVER_DUMP_LOG:
+		{
+			P_EVENT_DRIVER_DUMP_EMI_LOG_T prEventDriverDumpEmiLog;
+
+			DBGLOG(RX, TRACE, "EVENT_ID_DRIVER_DUMP_LOG\n");
+			prEventDriverDumpEmiLog = (P_EVENT_DRIVER_DUMP_EMI_LOG_T) (prEvent->aucBuffer);
+			wlanReadFwInfoFromEmi(&(prEventDriverDumpEmiLog->u4RequestDriverDumpAddr));
+			break;
+		}
+#endif
 	case EVENT_ID_FW_LOG_ENV:
 		{
 			P_EVENT_FW_LOG_T prEventLog;
@@ -1590,9 +1622,7 @@ VOID nicRxProcessEventPacket(IN P_ADAPTER_T prAdapter, IN OUT P_SW_RFB_T prSwRfb
 VOID nicRxProcessMgmtPacket(IN P_ADAPTER_T prAdapter, IN OUT P_SW_RFB_T prSwRfb)
 {
 	UINT_8 ucSubtype;
-#if CFG_SUPPORT_802_11W
-	BOOLEAN fgMfgDrop = FALSE;
-#endif
+
 	ASSERT(prAdapter);
 	ASSERT(prSwRfb);
 
@@ -1625,8 +1655,13 @@ VOID nicRxProcessMgmtPacket(IN P_ADAPTER_T prAdapter, IN OUT P_SW_RFB_T prSwRfb)
 	if ((prAdapter->fgTestMode == FALSE) && (prAdapter->prGlueInfo->fgIsRegistered == TRUE)) {
 #if CFG_MGMT_FRAME_HANDLING
 #if CFG_SUPPORT_802_11W
+		P_RX_CTRL_T prRxCtrl;
+		BOOLEAN fgMfgDrop = FALSE;
+
 		fgMfgDrop = rsnCheckRxMgmt(prAdapter, prSwRfb, ucSubtype);
 		if (fgMfgDrop) {
+			prRxCtrl = &prAdapter->rRxCtrl;
+			ASSERT(prRxCtrl);
 #if DBG
 			LOG_FUNC("QM RX MGT: Drop Unprotected Mgmt frame!!!\n");
 #endif
@@ -1691,9 +1726,12 @@ static VOID nicRxCheckWakeupReason(P_SW_RFB_T prSwRfb)
 		switch (u2Temp) {
 		case ETH_P_IPV4:
 			u2Temp = *(UINT_16 *) &pvHeader[ETH_HLEN + 4];
-			DBGLOG(RX, INFO, "IP Packet from:%d.%d.%d.%d, IP ID 0x%04x wakeup host\n",
+			DBGLOG(RX, INFO, "IP Packet:%d.%d.%d.%d, to:%d.%d.%d.%d,ID 0x%04x wakeup host\n",
 				pvHeader[ETH_HLEN + 12], pvHeader[ETH_HLEN + 13],
-				pvHeader[ETH_HLEN + 14], pvHeader[ETH_HLEN + 15], u2Temp);
+				pvHeader[ETH_HLEN + 14], pvHeader[ETH_HLEN + 15],
+				pvHeader[ETH_HLEN + 16], pvHeader[ETH_HLEN + 17],
+				pvHeader[ETH_HLEN + 18], pvHeader[ETH_HLEN + 19],
+				u2Temp);
 			break;
 		case ETH_P_ARP:
 		{
@@ -2806,7 +2844,7 @@ WLAN_STATUS nicRxProcessActionFrame(IN P_ADAPTER_T prAdapter, IN P_SW_RFB_T prSw
 	if (prSwRfb->u2PacketLen < sizeof(WLAN_ACTION_FRAME) - 1)
 		return WLAN_STATUS_INVALID_PACKET;
 	prActFrame = (P_WLAN_ACTION_FRAME) prSwRfb->pvHeader;
-	DBGLOG(RX, INFO, "Category %u\n", prActFrame->ucCategory);
+	DBGLOG(RX, INFO, "Category %u, Action %u\n", prActFrame->ucCategory, prActFrame->ucAction);
 
 	switch (prActFrame->ucCategory) {
 	case CATEGORY_QOS_ACTION:
@@ -2814,6 +2852,10 @@ WLAN_STATUS nicRxProcessActionFrame(IN P_ADAPTER_T prAdapter, IN P_SW_RFB_T prSw
 		handleQosMapConf(prAdapter, prSwRfb);
 		break;
 	case CATEGORY_PUBLIC_ACTION:
+		if (prActFrame->ucAction == PUBLIC_ACTION_GAS_INITIAL_REQ) /* GAS Initial Request */
+			DBGLOG(RX, INFO, "received GAS Initial Request frame\n");
+		else if (prActFrame->ucAction == PUBLIC_ACTION_GAS_INITIAL_RESP) /* GAS Initial Response */
+			DBGLOG(RX, INFO, "received GAS Initial Response frame\n");
 		if (HIF_RX_HDR_GET_NETWORK_IDX(prSwRfb->prHifRxHdr) == NETWORK_TYPE_AIS_INDEX)
 			aisFuncValidateRxActionFrame(prAdapter, prSwRfb);
 #if CFG_ENABLE_WIFI_DIRECT
@@ -2848,10 +2890,11 @@ WLAN_STATUS nicRxProcessActionFrame(IN P_ADAPTER_T prAdapter, IN P_SW_RFB_T prSw
 			if ((HIF_RX_HDR_GET_NETWORK_IDX(prHifRxHdr) == NETWORK_TYPE_AIS_INDEX)
 					&& prAdapter->rWifiVar.rAisSpecificBssInfo.fgMgmtProtection	/* Use MFP */) {
 				if (!(prHifRxHdr->ucReserved & CONTROL_FLAG_UC_MGMT_NO_ENC)) {
+					DBGLOG(RSN, INFO, "Rx SA Query\n");
 					/* MFP test plan 5.3.3.4 */
 					rsnSaQueryAction(prAdapter, prSwRfb);
 				} else {
-					DBGLOG(RSN, TRACE, "Un-Protected SA Query, do nothing\n");
+					DBGLOG(RSN, WARN, "Un-Protected SA Query, do nothing\n");
 				}
 			}
 		}

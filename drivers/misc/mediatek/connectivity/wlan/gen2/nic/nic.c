@@ -1257,6 +1257,8 @@ UINT_32 nicFreq2ChannelNum(UINT_32 u4FreqInKHz)
 		return 136;
 	case 5700000:
 		return 140;
+	case 5720000:
+		return 144;
 	case 5745000:
 		return 149;
 	case 5765000:
@@ -1399,7 +1401,12 @@ WLAN_STATUS nicUpdateBss(IN P_ADAPTER_T prAdapter, IN ENUM_NETWORK_TYPE_INDEX_T 
 
 	if (rCmdSetBssInfo.ucNetTypeIndex == NETWORK_TYPE_AIS_INDEX) {
 		P_CONNECTION_SETTINGS_T prConnSettings = &(prAdapter->rWifiVar.rConnSettings);
-
+#if CFG_SUPPORT_HOTSPOT_2_0
+		/* mapping OSEN to WPA2, due to firmware no need to know current is OSEN */
+		if (prConnSettings->eAuthMode == AUTH_MODE_WPA_OSEN)
+			rCmdSetBssInfo.ucAuthMode = AUTH_MODE_WPA2;
+		else
+#endif
 		rCmdSetBssInfo.ucAuthMode = (UINT_8) prConnSettings->eAuthMode;
 		rCmdSetBssInfo.ucEncStatus = (UINT_8) prConnSettings->eEncStatus;
 		rCmdSetBssInfo.fgWapiMode = (UINT_8) prConnSettings->fgWapiMode;
@@ -1973,7 +1980,65 @@ WLAN_STATUS nicUpdateTxPower(IN P_ADAPTER_T prAdapter, IN P_CMD_TX_PWR_T prTxPwr
 				   TRUE,
 				   FALSE, FALSE, NULL, NULL, sizeof(CMD_TX_PWR_T), (PUINT_8) prTxPwrParam, NULL, 0);
 }
+#if CFG_SUPPORT_TX_BACKOFF
+/*----------------------------------------------------------------------------*/
+/*!
+* @brief This utility function is used to update TX power offset corresponding to
+*        each band/modulation/channel combination
+*
+* @param prAdapter          Pointer of ADAPTER_T
+*        prTxPwrOffsetParam       Pointer of TX power offset parameters
+*
+* @retval WLAN_STATUS_PENDING
+*         WLAN_STATUS_FAILURE
+*/
+/*----------------------------------------------------------------------------*/
+WLAN_STATUS nicUpdateTxPowerOffset(IN P_ADAPTER_T prAdapter, IN P_CMD_MITIGATED_PWR_OFFSET_T prTxPwrOffsetParam)
+{
+	DEBUGFUNC("nicUpdateTxPowerOffset");
 
+	ASSERT(prAdapter);
+
+	return wlanSendSetQueryCmd(prAdapter,
+					CMD_ID_SET_TX_PWR_OFFSET,
+					TRUE,
+					FALSE,
+					FALSE,
+					NULL,
+					NULL,
+					sizeof(CMD_MITIGATED_PWR_OFFSET_T),
+					(PUINT_8) prTxPwrOffsetParam, NULL, 0);
+}
+
+/*----------------------------------------------------------------------------*/
+/*!
+* @brief This utility function is used to update TX BackOff Start/Stop
+*
+* @param prAdapter          Pointer of ADAPTER_T
+*        prTxPwrOffsetParam       Pointer of TX power offset parameters
+*
+* @retval WLAN_STATUS_PENDING
+*         WLAN_STATUS_FAILURE
+*/
+/*----------------------------------------------------------------------------*/
+WLAN_STATUS nicTxPowerBackOff(IN P_ADAPTER_T prAdapter, IN UINT32 TxPowerBackOffParam)
+{
+	DEBUGFUNC("nicTxPowerBackOff");
+
+	ASSERT(prAdapter);
+
+	DBGLOG(REQ, INFO, "%s: TxPowerBackOffParam = 0x%x\n", __func__, TxPowerBackOffParam);
+	return wlanSendSetQueryCmd(prAdapter,
+					CMD_ID_SET_TX_PWR_BACKOFF,
+					TRUE,
+					FALSE,
+					FALSE,
+					NULL,
+					NULL,
+					sizeof(UINT32),
+					(PUINT_8)&TxPowerBackOffParam, NULL, 0);
+}
+#endif
 /*----------------------------------------------------------------------------*/
 /*!
 * @brief This utility function is used to set auto tx power parameter

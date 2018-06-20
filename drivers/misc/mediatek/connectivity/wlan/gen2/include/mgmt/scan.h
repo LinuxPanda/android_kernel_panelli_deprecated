@@ -133,6 +133,13 @@ typedef struct _MSG_SCN_FSM_T {
 	UINT_32 u4Dummy;
 } MSG_SCN_FSM_T, *P_MSG_SCN_FSM_T;
 
+typedef enum _ENUM_POSTPONE_SCHED_SCAN_REQUEST_T {
+	SCHED_SCAN_POSTPONE_START = 0,
+	SCHED_SCAN_POSTPONE_STOP,
+	SCHED_SCAN_POSTPONE_NUM
+} ENUM_POSTPONE_SCHED_SCAN_REQUEST_T;
+
+
 typedef enum _ENUM_PSCAN_STATE_T {
 	PSCN_IDLE = 0,
 	PSCN_RESET,
@@ -158,6 +165,7 @@ struct _BSS_DESC_T {
 				 * don't removed this record from BSS list.
 				 */
 
+	BOOLEAN fgIsValidSSID; /* This flag is TRUE if the SSID is not hidden */
 	BOOLEAN fgIsHiddenSSID;	/* When this flag is TRUE, means the SSID
 				 * of this BSS is not known yet.
 				 */
@@ -214,6 +222,7 @@ struct _BSS_DESC_T {
 #endif
 	BOOLEAN fgIERSN;
 	BOOLEAN fgIEWPA;
+	BOOLEAN fgIEOsen;
 
 	/*! \brief RSN parameters selected for connection */
 	/*! \brief The Select score for final AP selection,
@@ -467,6 +476,9 @@ typedef struct _SCAN_INFO_T {
 	BOOLEAN fgGScnParamSet;
 	BOOLEAN fgGScnAction;
 	P_CMD_SET_PSCAN_PARAM prPscnParam;
+	BOOLEAN fgIsPostponeSchedScan;
+	ENUM_POSTPONE_SCHED_SCAN_REQUEST_T eCurrendSchedScanReq;
+	PARAM_SCHED_SCAN_REQUEST rSchedScanRequest;
 	ENUM_PSCAN_STATE_T eCurrentPSCNState;
 #endif
 #if CFG_SUPPORT_GSCN
@@ -769,7 +781,9 @@ BOOLEAN scnCombineParamsIntoPSCN(IN P_ADAPTER_T prAdapter,
 
 VOID scnPSCNFsm(IN P_ADAPTER_T prAdapter, IN ENUM_PSCAN_STATE_T eNextPSCNState);
 #endif
-
+#if CFG_NLO_MSP
+VOID scnSetMspParameterIntoPSCN(IN P_ADAPTER_T prAdapter, IN P_CMD_SET_PSCAN_PARAM prCmdPscnParam);
+#endif
 #if CFG_SUPPORT_GSCN
 BOOLEAN scnSetGSCNParam(IN P_ADAPTER_T prAdapter, IN P_PARAM_WIFI_GSCAN_CMD_PARAMS prCmdGscnParam);
 

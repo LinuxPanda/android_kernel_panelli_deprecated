@@ -103,6 +103,7 @@ typedef enum _ENUM_PARAM_AUTH_MODE_T {
 	AUTH_MODE_WPA_NONE,	/*!< For Ad hoc */
 	AUTH_MODE_WPA2,
 	AUTH_MODE_WPA2_PSK,
+	AUTH_MODE_WPA_OSEN,
 	AUTH_MODE_NUM		/*!< Upper bound, not real case */
 } ENUM_PARAM_AUTH_MODE_T, *P_ENUM_PARAM_AUTH_MODE_T;
 
@@ -1457,6 +1458,12 @@ WLAN_STATUS
 wlanoidSetCountryCode(IN P_ADAPTER_T prAdapter,
 		      IN PVOID pvSetBuffer, IN UINT_32 u4SetBufferLen, OUT PUINT_32 pu4SetInfoLen);
 
+#ifdef CFG_TC1_FEATURE /* for Passive Scan */
+WLAN_STATUS
+wlanoidSetPassiveScan(IN P_ADAPTER_T  prAdapter,
+		      IN PVOID pvSetBuffer, IN UINT_32 u4SetBufferLen, OUT PUINT_32 pu4SetInfoLen);
+#endif
+
 WLAN_STATUS wlanSendMemDumpCmd(IN P_ADAPTER_T prAdapter, IN PVOID pvQueryBuffer, IN UINT_32 u4QueryBufferLen);
 
 #if CFG_SLT_SUPPORT
@@ -1610,19 +1617,38 @@ wlanoidQueryLteSafeChannel(IN P_ADAPTER_T prAdapter,
 ********************************************************************************
 */
 
-#if CFG_SUPPORT_OKC
-WLAN_STATUS
-wlanoidAddPMKID(IN P_ADAPTER_T prAdapter,
-			 IN PVOID pvSetBuffer, IN UINT_32 u4SetBufferLen, OUT PUINT_32 pu4SetInfoLen);
-#endif
 #ifdef FW_CFG_SUPPORT
 WLAN_STATUS wlanoidQueryCfgRead(IN P_ADAPTER_T prAdapter,
 				IN PVOID pvQueryBuffer, IN UINT_32 u4QueryBufferLen, OUT PUINT_32 pu4QueryInfoLen);
 #endif
+#if CFG_SUPPORT_EMI_DEBUG
+WLAN_STATUS
+wlanoidSetEnableDumpEMILog(IN P_ADAPTER_T prAdapter,
+				IN PVOID pvSetBuffer, IN UINT_32 u4SetBufferLen, OUT PUINT_32 pu4SetInfoLen);
+#endif
 #endif /* _WLAN_OID_H */
+WLAN_STATUS
+wlanoidSetChipConfig(IN P_ADAPTER_T prAdapter,
+		     IN PVOID pvSetBuffer, IN UINT_32 u4SetBufferLen, OUT PUINT_32 pu4SetInfoLen);
+WLAN_STATUS
+wlanoidNotifyFwSuspend(IN P_ADAPTER_T prAdapter,
+								IN PVOID pvSetBuffer,
+								IN UINT_32 u4SetBufferLen,
+								OUT PUINT_32 pu4SetInfoLen);
+
+WLAN_STATUS
+wlanoidSetAlwaysScan(IN  P_ADAPTER_T prAdapter, IN PVOID pvSetBuffer,
+			IN UINT_32 u4SetBufferLen, OUT PUINT_32 pu4SetInfoLen);
+
+
+WLAN_STATUS
+wlanoidDisableTdlsPs(IN P_ADAPTER_T prAdapter,
+			 IN PVOID pvSetBuffer, IN UINT_32 u4SetBufferLen, OUT PUINT_32 pu4SetInfoLen);
+
 WLAN_STATUS wlanoidSetPacketFilter(P_ADAPTER_T prAdapter, UINT_32 u4PacketFilter,
 				BOOLEAN fgIsOid, PVOID pvSetBuffer, UINT_32 u4SetBufferLen);
 
 WLAN_STATUS wlanoidSetDrvRoamingPolicy(IN P_ADAPTER_T prAdapter,
 			 IN PVOID pvSetBuffer, IN UINT_32 u4SetBufferLen, OUT PUINT_32 pu4SetInfoLen);
+
 

@@ -42,6 +42,7 @@
 #define FP_SYS_NO               (100)
 #define FP_BUFF_SIZE            (512 * 1024)
 
+#define CANCEL_MESSAGE_SIZE	(4096)
 #define KEYMASTER_SYS_NO               (101)
 #define KEYMASTER_BUFF_SIZE            (512 * 1024)
 
@@ -58,8 +59,17 @@
 #define FDRV_CALL       0x02
 #define BDRV_CALL       0x03
 #define SCHED_CALL	0x04
-
+#define INIT_CMD_CALL   0x05
+#define BOOT_STAGE2     0x06
+#define INVOKE_FASTCALL 0x07
+#define LOAD_TEE        0x08
+#define BOOT_STAGE1	0x09
+#define LOAD_FUNC	0x0A
+#define LOCK_PM_MUTEX   0x0C
+#define UNLOCK_PM_MUTEX 0x0D
+#define SWITCH_CORE	0x0E
+#define NT_DUMP_T	(0x10)
 #define VFS_SYS_NO 	0x08
 #define REETIME_SYS_NO	0x07
+#define IRQ_DELAY	1000
 
-#define UT_DMA_ZONE

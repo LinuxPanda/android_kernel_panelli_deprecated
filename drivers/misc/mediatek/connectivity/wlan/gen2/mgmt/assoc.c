@@ -69,6 +69,10 @@ APPEND_VAR_IE_ENTRY_T txAssocReqIETable[] = {
 	{(ELEM_HDR_LEN + ELEM_MAX_LEN_WPA), NULL, rsnGenerateWPAIE}
 	,			/* 221 */
 #endif
+#if CFG_SUPPORT_MTK_SYNERGY
+	{(ELEM_HDR_LEN + ELEM_MIN_LEN_MTK_OUI), NULL, rlmGenerateMTKOuiIE}	/* 221 */
+#endif
+
 };
 
 #if CFG_SUPPORT_AAA
@@ -97,6 +101,10 @@ APPEND_VAR_IE_ENTRY_T txAssocRespIETable[] = {
 	,			/* 127 */
 	{(ELEM_HDR_LEN + ELEM_MAX_LEN_WMM_PARAM), NULL, mqmGenerateWmmParamIE}
 	,			/* 221 */
+#if CFG_SUPPORT_MTK_SYNERGY
+	{(ELEM_HDR_LEN + ELEM_MIN_LEN_MTK_OUI), NULL, rlmGenerateMTKOuiIE}
+	,			/* 221 */
+#endif
 
 	{(0), p2pFuncCalculateWSC_IELenForAssocRsp, p2pFuncGenerateWSC_IEForAssocRsp}	/* 221 */
 
@@ -969,8 +977,7 @@ WLAN_STATUS assocSendDisAssocFrame(IN P_ADAPTER_T prAdapter, IN P_STA_RECORD_T p
 		P_WLAN_DISASSOC_FRAME_T prDisassocFrame;
 
 		prDisassocFrame =
-		    (P_WLAN_DEAUTH_FRAME_T) (PUINT_8) ((ULONG) (prMsduInfo->prPacket) + MAC_TX_RESERVED_FIELD);
-
+		    (P_WLAN_DISASSOC_FRAME_T) (PUINT_8) ((ULONG) (prMsduInfo->prPacket) + MAC_TX_RESERVED_FIELD);
 		prDisassocFrame->u2FrameCtrl |= MASK_FC_PROTECTED_FRAME;
 		DBGLOG(TX, WARN, "assocSendDisAssocFrame with protection\n");
 	}

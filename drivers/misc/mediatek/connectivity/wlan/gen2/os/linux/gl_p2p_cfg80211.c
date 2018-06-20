@@ -722,6 +722,7 @@ int mtk_p2p_cfg80211_change_beacon(struct wiphy *wiphy, struct net_device *dev, 
 
 		mboxSendMsg(prGlueInfo->prAdapter, MBOX_ID_0, (P_MSG_HDR_T) prP2pBcnUpdateMsg, MSG_SEND_METHOD_BUF);
 
+		i4Rslt = 0;
 /* ////////////////////////// */
 /**
  * struct cfg80211_beacon_data - beacon data
@@ -2051,6 +2052,9 @@ int mtk_p2p_cfg80211_testmode_get_best_channel(IN struct wiphy *wiphy, IN void *
 		if (!(u4LteSafeChnBitMask_2G & BIT(arChannelDirtyScore_2G[i].ucChannel)))
 			continue;
 
+		if (arChannelDirtyScore_2G[i].ucChannel == 14)
+			continue;
+		
 		if (rPreferChannel.u2APNumScore >= arChannelDirtyScore_2G[i].u2APNumScore) {
 			rPreferChannel.ucChannel = arChannelDirtyScore_2G[i].ucChannel;
 			rPreferChannel.u2APNumScore = arChannelDirtyScore_2G[i].u2APNumScore;

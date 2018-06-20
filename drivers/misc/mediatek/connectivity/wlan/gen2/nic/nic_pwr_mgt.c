@@ -107,20 +107,20 @@ VOID nicpmSetFWOwn(IN P_ADAPTER_T prAdapter, IN BOOLEAN fgEnableGlobalInt)
 * \return (none)
 */
 /*----------------------------------------------------------------------------*/
+
 UINT_32 u4OriRegValue = 0;
 #define AEE_STRING_LENGTH 128
 BOOLEAN nicpmSetDriverOwn(IN P_ADAPTER_T prAdapter)
 {
 #define LP_OWN_BACK_TOTAL_DELAY_MS      2000	/* exponential of 2 */
 #define LP_OWN_BACK_LOOP_DELAY_MS       1	/* exponential of 2 */
-#define LP_OWN_BACK_CLR_OWN_ITERATION   256	/* exponential of 2 */
+#define LP_OWN_BACK_CLR_OWN_ITERATION   200	/* exponential of 2 */
 
 	BOOLEAN fgStatus = TRUE;
-	UINT_32 i, u4CurrTick;
+	UINT_32 i, u4CurrTick, u4WriteTick, u4WriteTickTemp;
 	UINT_32 u4RegValue = 0;
 	GL_HIF_INFO_T *HifInfo;
 	BOOLEAN fgWmtCoreDump = FALSE;
-	UCHAR aucAeeStr[AEE_STRING_LENGTH];
 
 	ASSERT(prAdapter);
 
@@ -129,6 +129,7 @@ BOOLEAN nicpmSetDriverOwn(IN P_ADAPTER_T prAdapter)
 
 	HifInfo = &prAdapter->prGlueInfo->rHifInfo;
 
+	u4WriteTick = 0;
 	u4CurrTick = kalGetTimeTick();
 
 	STATS_DRIVER_OWN_START_RECORD();
@@ -173,28 +174,40 @@ BOOLEAN nicpmSetDriverOwn(IN P_ADAPTER_T prAdapter)
 				HAL_MCR_RD(prAdapter, MCR_D2HRM2R, &u4RegValue);
 				DBGLOG(NIC, WARN, "<WiFi> [2]MCR_D2HRM2R = 0x%x, ORI_MCR_D2HRM2R = 0x%x\n",
 					u4RegValue, u4OriRegValue);
+				fgWmtCoreDump = glIsWmtCodeDump();
 				DBGLOG(NIC, WARN,
 					"<WiFi> Fatal error! Driver own fail!!!! %d, fgIsBusAccessFailed: %d,OWN retry:%d,fgCoreDump:%d\n",
 					u4OwnCnt++, fgIsBusAccessFailed, i, fgWmtCoreDump);
+
 				DBGLOG(NIC, WARN, "CONNSYS FW CPUINFO:\n");
 				for (u4FwCnt = 0; u4FwCnt < 16; u4FwCnt++)
 					DBGLOG(NIC, WARN, "0x%08x ", MCU_REG_READL(HifInfo, CONN_MCU_CPUPCR));
 				/* CONSYS_REG_READ(CONSYS_CPUPCR_REG) */
-				fgWmtCoreDump = glIsWmtCodeDump();
-				kalSnprintf(aucAeeStr, sizeof(aucAeeStr), "%s[Fatal error! Driver own fail!]",
-					(fgWmtCoreDump) ? ("[CoreDumping]") : (""));
-				kalSendAeeWarning(aucAeeStr, __func__);
-				glDoChipReset();
+				if (fgWmtCoreDump == FALSE) {
+					kalSendAeeWarning("[Fatal error! Driver own fail!]", __func__);
+					glDoChipReset();
+				} else
+					DBGLOG(NIC, WARN,
+						"[Driver own fail!] WMT is code dumping !STOP AEE & chip reset\n");
 			}
 			break;
 		}
-		if ((i & (LP_OWN_BACK_CLR_OWN_ITERATION - 1)) == 0) {
-			/* Software get LP ownership - per 256 iterations */
+
+		u4WriteTickTemp = kalGetTimeTick();
+		if (((u4WriteTickTemp - u4WriteTick) > LP_OWN_BACK_CLR_OWN_ITERATION)
+			|| (i == 0)) {
+			/* Software get LP ownership - per  LP_OWN_BACK_CLR_OWN_ITERATION*/
+			DBGLOG(NIC, TRACE, "retry i=%d, write LP_OWN_REQ_CLR cur time %u - %u\n",
+				i, u4WriteTickTemp, u4WriteTick);
 			HAL_MCR_WR(prAdapter, MCR_WHLPCR, WHLPCR_FW_OWN_REQ_CLR);
+			u4WriteTick = u4WriteTickTemp;
 		}
 
 		/* Delay for LP engine to complete its operation. */
-		kalMsleep(LP_OWN_BACK_LOOP_DELAY_MS);
+		if (i <= 8)
+			kalMdelay(LP_OWN_BACK_LOOP_DELAY_MS);
+		else
+			kalMsleep(LP_OWN_BACK_LOOP_DELAY_MS);
 		i++;
 	}
 
@@ -474,3 +487,4 @@ BOOLEAN nicpmSetAcpiPowerD3(IN P_ADAPTER_T prAdapter)
 
 	return TRUE;
 }
+

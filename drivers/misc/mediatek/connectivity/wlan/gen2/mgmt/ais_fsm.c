@@ -21,7 +21,7 @@
 ********************************************************************************
 */
 #include "precomp.h"
-
+static VOID aisFsmSetOkcTimeout(IN P_ADAPTER_T prAdapter, ULONG ulParam);
 /*******************************************************************************
 *                              C O N S T A N T S
 ********************************************************************************
@@ -167,6 +167,10 @@ VOID aisInitializeConnectionSettings(IN P_ADAPTER_T prAdapter, IN P_REG_INFO_T p
 
 	prConnSettings->fgIsAdHocQoSEnable = FALSE;
 
+#if CFG_SUPPORT_DETECT_SECURITY_MODE_CHANGE
+		prConnSettings->fgSecModeChangeStartTimer = FALSE;
+#endif
+
 	prConnSettings->eDesiredPhyConfig = PHY_CONFIG_802_11ABGN;
 
 	/* Set default bandwidth modes */
@@ -257,7 +261,15 @@ VOID aisFsmInit(IN P_ADAPTER_T prAdapter)
 	cnmTimerInitTimer(prAdapter,
 			  &prAisFsmInfo->rDeauthDoneTimer,
 			  (PFN_MGMT_TIMEOUT_FUNC) aisFsmRunEventDeauthTimeout, (ULONG) NULL);
+#if CFG_SUPPORT_DETECT_SECURITY_MODE_CHANGE
+		cnmTimerInitTimer(prAdapter,
+				  &prAisFsmInfo->rSecModeChangeTimer,
+				  (PFN_MGMT_TIMEOUT_FUNC) aisFsmRunEventSecModeChangeTimeout, (ULONG) NULL);
+#endif
 
+	cnmTimerInitTimer(prAdapter,
+				  &prAisFsmInfo->rWaitOkcPMKTimer,
+				  (PFN_MGMT_TIMEOUT_FUNC)aisFsmSetOkcTimeout, (ULONG) NULL);
 	/* 4 <1.2> Initiate PWR STATE */
 	SET_NET_PWR_STATE_IDLE(prAdapter, NETWORK_TYPE_AIS_INDEX);
 
@@ -343,7 +355,7 @@ VOID aisFsmUninit(IN P_ADAPTER_T prAdapter)
 	cnmTimerStopTimer(prAdapter, &prAisFsmInfo->rJoinTimeoutTimer);
 	cnmTimerStopTimer(prAdapter, &prAisFsmInfo->rScanDoneTimer);	/* Add by Enlai */
 	cnmTimerStopTimer(prAdapter, &prAisFsmInfo->rChannelTimeoutTimer);
-
+	cnmTimerStopTimer(prAdapter, &prAisFsmInfo->rWaitOkcPMKTimer);
 	/* 4 <2> flush pending request */
 	aisFsmFlushRequest(prAdapter);
 
@@ -413,6 +425,7 @@ VOID aisFsmStateInit_JOIN(IN P_ADAPTER_T prAdapter, P_BSS_DESC_T prBssDesc)
 		case AUTH_MODE_WPA_PSK:
 		case AUTH_MODE_WPA2:
 		case AUTH_MODE_WPA2_PSK:
+		case AUTH_MODE_WPA_OSEN:
 			prAisFsmInfo->ucAvailableAuthTypes = (UINT_8) AUTH_TYPE_OPEN_SYSTEM;
 			break;
 
@@ -936,18 +949,22 @@ VOID aisFsmSteps(IN P_ADAPTER_T prAdapter, ENUM_AIS_STATE_T eNextState)
 	P_MSG_SCN_SCAN_REQ prScanReqMsg;
 #endif
 	P_AIS_REQ_HDR_T prAisReq;
+	P_SCAN_INFO_T prScanInfo;
 	ENUM_BAND_T eBand;
 	UINT_8 ucChannel;
 	UINT_16 u2ScanIELen;
 	ENUM_AIS_STATE_T eOriPreState;
+	OS_SYSTIME rCurrentTime;
 
 	BOOLEAN fgIsTransition = (BOOLEAN) FALSE;
+	BOOLEAN fgIsRequestScanPending = (BOOLEAN) FALSE;
 
 	DEBUGFUNC("aisFsmSteps()");
 
 	prAisFsmInfo = &(prAdapter->rWifiVar.rAisFsmInfo);
 	prAisBssInfo = &(prAdapter->rWifiVar.arBssInfo[NETWORK_TYPE_AIS_INDEX]);
 	prConnSettings = &(prAdapter->rWifiVar.rConnSettings);
+	prScanInfo = &(prAdapter->rWifiVar.rScanInfo);
 	eOriPreState = prAisFsmInfo->ePreviousState;
 
 	do {
@@ -1010,16 +1027,24 @@ VOID aisFsmSteps(IN P_ADAPTER_T prAdapter, ENUM_AIS_STATE_T eNextState)
 					nicDeactivateNetwork(prAdapter, NETWORK_TYPE_AIS_INDEX);
 
 					/* check for other pending request */
-					if (prAisReq &&
-						(aisFsmIsRequestPending(prAdapter, AIS_REQUEST_SCAN, TRUE) == TRUE)) {
+
+					fgIsRequestScanPending =
+						aisFsmIsRequestPending(prAdapter, AIS_REQUEST_SCAN, TRUE);
+
+					if (prAisReq && fgIsRequestScanPending == TRUE) {
 
 						wlanClearScanningResult(prAdapter);
 						eNextState = AIS_STATE_SCAN;
 
 						fgIsTransition = TRUE;
 					}
-				}
+					/*check for pending sched scan request*/
+					if (prAisReq == NULL &&
+						fgIsRequestScanPending == FALSE &&
+						prScanInfo->fgIsPostponeSchedScan == TRUE)
+						aisPostponedEventOfSchedScanReq(prAdapter, prAisFsmInfo);
 
+				}
 				if (prAisReq) {
 					/* free the message */
 					cnmMemFree(prAdapter, prAisReq);
@@ -1178,16 +1203,26 @@ VOID aisFsmSteps(IN P_ADAPTER_T prAdapter, ENUM_AIS_STATE_T eNextState)
 					if (prConnSettings->eOPMode == NET_TYPE_INFRA)
 						prAisFsmInfo->ucConnTrialCount++;
 
-					/* Join req timeout means Bss had lost and no need to looking for */
-					if (prAisFsmInfo->rJoinReqTime != 0 &&
-						   CHECK_FOR_TIMEOUT(kalGetTimeTick(),
-								     prAisFsmInfo->rJoinReqTime,
-								     SEC_TO_SYSTIME(AIS_JOIN_TIMEOUT))) {
-						prConnSettings->fgIsDisconnectedByNonRequest = TRUE;
-						eNextState = AIS_STATE_IDLE;
-						fgIsTransition = TRUE;
+					/* if alway can't find traget bss, during new connect */
+					GET_CURRENT_SYSTIME(&rCurrentTime);
+					if ((prAisBssInfo->ucReasonOfDisconnect ==
+						    DISCONNECT_REASON_CODE_NEW_CONNECTION) &&
+						prAisFsmInfo->rJoinReqTime != 0 &&
+					   CHECK_FOR_TIMEOUT(rCurrentTime,
+							     prAisFsmInfo->rJoinReqTime,
+							     SEC_TO_SYSTIME(AIS_JOIN_TIMEOUT))) {
+						/* abort connection trial */
+						prAdapter->rWifiVar.rConnSettings.fgIsConnReqIssued = FALSE;
+						prAdapter->rWifiVar.rConnSettings.eReConnectLevel
+							= RECONNECT_LEVEL_MIN;
+
+						DBGLOG(AIS, WARN,
+							"Target BSS is NULL ,timeout and report disconnect!\n");
 						kalIndicateStatusAndComplete(prAdapter->prGlueInfo,
 								     WLAN_STATUS_CONNECT_INDICATION, NULL, 0);
+						eNextState = AIS_STATE_IDLE;
+						fgIsTransition = TRUE;
+						prAisFsmInfo->rJoinReqTime = 0;
 						break;
 					}
 
@@ -1329,6 +1364,26 @@ VOID aisFsmSteps(IN P_ADAPTER_T prAdapter, ENUM_AIS_STATE_T eNextState)
 					fgIsTransition = TRUE;
 				}
 			}
+			if (prBssDesc && prConnSettings->fgUseOkc) {
+				UINT_8 aucBuf[sizeof(PARAM_PMKID_CANDIDATE_LIST_T) + sizeof(PARAM_STATUS_INDICATION_T)];
+				P_PARAM_STATUS_INDICATION_T prStatusEvent = (P_PARAM_STATUS_INDICATION_T)aucBuf;
+				P_PARAM_PMKID_CANDIDATE_LIST_T prPmkidCandicate =
+					(P_PARAM_PMKID_CANDIDATE_LIST_T)(prStatusEvent+1);
+				UINT_32 u4Entry = 0;
+
+				if (rsnSearchPmkidEntry(prAdapter, prBssDesc->aucBSSID, &u4Entry) &&
+					prAdapter->rWifiVar.rAisSpecificBssInfo.arPmkidCache[u4Entry].fgPmkidExist)
+					break;
+				DBGLOG(AIS, INFO, "No PMK for %pM, try to generate a OKC PMK\n", prBssDesc->aucBSSID);
+				prStatusEvent->eStatusType = ENUM_STATUS_TYPE_CANDIDATE_LIST;
+				prPmkidCandicate->u4Version = 1;
+				prPmkidCandicate->u4NumCandidates = 1;
+				prPmkidCandicate->arCandidateList[0].u4Flags = 0; /* don't request preauth */
+				COPY_MAC_ADDR(prPmkidCandicate->arCandidateList[0].arBSSID, prBssDesc->aucBSSID);
+				kalIndicateStatusAndComplete(prAdapter->prGlueInfo,
+					 WLAN_STATUS_MEDIA_SPECIFIC_INDICATION, (PVOID)aucBuf, sizeof(aucBuf));
+				cnmTimerStartTimer(prAdapter, &prAisFsmInfo->rWaitOkcPMKTimer, AIS_WAIT_OKC_PMKID_SEC);
+			}
 
 			break;
 
@@ -1398,7 +1453,11 @@ VOID aisFsmSteps(IN P_ADAPTER_T prAdapter, ENUM_AIS_STATE_T eNextState)
 #if CFG_SUPPORT_RDD_TEST_MODE
 			prScanReqMsg->eScanType = SCAN_TYPE_PASSIVE_SCAN;
 #else
+#ifdef CFG_TC1_FEATURE /* for Passive Scan */
+			prScanReqMsg->eScanType = (ENUM_SCAN_TYPE_T)prAdapter->ucScanType;
+#else
 			prScanReqMsg->eScanType = SCAN_TYPE_ACTIVE_SCAN;
+#endif
 #endif
 
 #if CFG_SUPPORT_ROAMING_ENC
@@ -1615,6 +1674,11 @@ VOID aisFsmSteps(IN P_ADAPTER_T prAdapter, ENUM_AIS_STATE_T eNextState)
 			break;
 
 		case AIS_STATE_REQ_CHANNEL_JOIN:
+
+			/*set timeout timer*/
+			cnmTimerStartTimer(prAdapter, &prAisFsmInfo->rChannelTimeoutTimer
+				, AIS_JOIN_CH_REQUEST_INTERVAL);
+
 			/* send message to CNM for acquiring channel */
 			prMsgChReq = (P_MSG_CH_REQ_T) cnmMemAlloc(prAdapter, RAM_TYPE_MSG, sizeof(MSG_CH_REQ_T));
 			if (!prMsgChReq) {
@@ -2357,6 +2421,8 @@ VOID aisFsmRunEventJoinComplete(IN P_ADAPTER_T prAdapter, IN P_MSG_HDR_T prMsgHd
 						ASSERT(prBssDesc);
 						ASSERT(prBssDesc->fgIsConnecting);
 						*/
+						aisFsmStateAbort(prAdapter,
+							DISCONNECT_REASON_CODE_DEAUTHENTICATED, FALSE);
 						break;
 					}
 					/* ASSERT(prBssDesc); */
@@ -2366,9 +2432,11 @@ VOID aisFsmRunEventJoinComplete(IN P_ADAPTER_T prAdapter, IN P_MSG_HDR_T prMsgHd
 						aisAddBlacklist(prAdapter, prBssDesc);
 						GET_CURRENT_SYSTIME(&prBssDesc->rJoinFailTime);
 						DBGLOG(AIS, INFO,
-							"Bss %pM join fail %d times,temp disable it at time:%u\n",
+							"Bss %pM join fail %d > %d times,temp disable it at time:%u\n",
 							prBssDesc->aucBSSID,
-							SCN_BSS_JOIN_FAIL_THRESOLD, prBssDesc->rJoinFailTime);
+							prBssDesc->ucJoinFailureCount,
+							SCN_BSS_JOIN_FAIL_THRESOLD,
+							prBssDesc->rJoinFailTime);
 					}
 					if (prBssDesc->prBlack)
 						prBssDesc->prBlack->u2AuthStatus = prStaRec->u2StatusCode;
@@ -2827,6 +2895,57 @@ aisIndicationOfMediaStateToHost(IN P_ADAPTER_T prAdapter,
 	}
 
 }				/* end of aisIndicationOfMediaStateToHost() */
+/*----------------------------------------------------------------------------*/
+/*!
+* @brief This function will indicate an Event of "Sched Scan Start"
+*
+* @param[in] u4Param  Unused timer parameter
+*
+* @return (none)
+*/
+/*----------------------------------------------------------------------------*/
+VOID aisPostponedEventOfSchedScanReq(IN P_ADAPTER_T prAdapter, IN P_AIS_FSM_INFO_T prAisFsmInfo)
+{
+	P_SCAN_INFO_T prScanInfo;
+	P_PARAM_SCHED_SCAN_REQUEST prSchedScanRequest;
+
+	ASSERT(prAdapter);
+
+	prScanInfo = &(prAdapter->rWifiVar.rScanInfo);
+	prSchedScanRequest = &prScanInfo->rSchedScanRequest;
+
+	DBGLOG(AIS, INFO, "aisPostponedEventOfSchedScanReq:AIS CurState[%d] SchedScanReq:%d\n"
+		, prAisFsmInfo->eCurrentState
+		, prScanInfo->eCurrendSchedScanReq);
+
+	if (prScanInfo->fgIsPostponeSchedScan == TRUE) {
+		if (prScanInfo->eCurrendSchedScanReq == SCHED_SCAN_POSTPONE_START) {
+			/*resume schedscan start*/
+			if (scnFsmSchedScanRequest(prAdapter,
+				(UINT_8) (prSchedScanRequest->u4SsidNum),
+				prSchedScanRequest->arSsid,
+				prSchedScanRequest->u4IELength,
+				prSchedScanRequest->pucIE, prSchedScanRequest->u2ScanInterval) == TRUE)
+				DBGLOG(AIS, INFO, "aisPostponedEventOf SchedScanStart: Success!\n");
+			else
+				DBGLOG(AIS, WARN, "aisPostponedEventOf SchedScanStart: fail\n");
+
+		} else if (prScanInfo->eCurrendSchedScanReq == SCHED_SCAN_POSTPONE_STOP) {
+			/*resume schedscan stop*/
+			if (scnFsmSchedScanStopRequest(prAdapter) == TRUE)
+				DBGLOG(AIS, INFO, "aisPostponedEventOf SchedScanStop: Success!\n");
+			else
+				DBGLOG(AIS, INFO, "aisPostponedEventOf SchedScanStop: fail!\n");
+
+		} else
+			DBGLOG(AIS, INFO, "unexcept SchedScan Request!\n");
+	} else {
+		DBGLOG(AIS, WARN, "driver don't resume schedScan Request\n");
+	}
+
+
+
+}				/* end of aisPostponedEventOfSchedScanReq() */
 
 /*----------------------------------------------------------------------------*/
 /*!
@@ -2841,6 +2960,7 @@ VOID aisPostponedEventOfDisconnTimeout(IN P_ADAPTER_T prAdapter, IN P_AIS_FSM_IN
 {
 	P_BSS_INFO_T prAisBssInfo;
 	P_CONNECTION_SETTINGS_T prConnSettings;
+	P_SCAN_INFO_T prScanInfo;
 	BOOLEAN fgFound = TRUE;
 
 	/* firstly, check if we have started postpone indication.
@@ -2851,9 +2971,16 @@ VOID aisPostponedEventOfDisconnTimeout(IN P_ADAPTER_T prAdapter, IN P_AIS_FSM_IN
 	/* if we're in	req channel/join/search state, don't report disconnect. */
 	if (prAisFsmInfo->eCurrentState == AIS_STATE_JOIN ||
 		prAisFsmInfo->eCurrentState == AIS_STATE_SEARCH ||
-		prAisFsmInfo->eCurrentState == AIS_STATE_REQ_CHANNEL_JOIN) {
+		prAisFsmInfo->eCurrentState == AIS_STATE_REQ_CHANNEL_JOIN ||
+		prAisFsmInfo->eCurrentState == AIS_STATE_COLLECT_ESS_INFO) {
 		DBGLOG(AIS, INFO, "CurrentState: %d, don't report disconnect\n",
 				   prAisFsmInfo->eCurrentState);
+		return;
+	}
+
+	prScanInfo = &(prAdapter->rWifiVar.rScanInfo);
+	if (prScanInfo->eCurrentState == SCAN_STATE_SCANNING) {
+		DBGLOG(AIS, INFO, "SCANNING, don't report disconnect\n");
 		return;
 	}
 
@@ -3394,7 +3521,8 @@ VOID aisFsmDisconnect(IN P_ADAPTER_T prAdapter, IN BOOLEAN fgDelayIndication)
 	aisIndicationOfMediaStateToHost(prAdapter, PARAM_MEDIA_STATE_DISCONNECTED, fgDelayIndication);
 
 	/*dump package information and ignore disconnect before new connect state*/
-	if (prAdapter->rWifiVar.rAisFsmInfo.eCurrentState != AIS_STATE_REMAIN_ON_CHANNEL)
+	if (prAdapter->rWifiVar.rAisFsmInfo.eCurrentState != AIS_STATE_REMAIN_ON_CHANNEL &&
+			prAisBssInfo->ucReasonOfDisconnect != DISCONNECT_REASON_CODE_NEW_CONNECTION)
 		wlanPktDebugDumpInfo(prAdapter);
 
 	/* 4 <7> Trigger AIS FSM */
@@ -3443,6 +3571,12 @@ VOID aisFsmRunEventScanDoneTimeOut(IN P_ADAPTER_T prAdapter, ULONG ulParam)
 
 	/*dump firmware status */
 	wlanDumpCommandFwStatus();
+
+	/* dump TX_Description for Scan Request */
+	/* (1) dump Tc4[0]~[3] for Scan Request before hal write */
+	/* (2) dump Tc4[0]~[3] for Scan Request after hal write done  */
+	/* if TC[X]ucOwn 1 -> 0,FW available and set 1, and Hardware receiced and set 0 */
+	wlanDebugScanDump(prAdapter);
 
 	ucScanTimeoutTimes++;
 	if (ucScanTimeoutTimes > SCAN_DONE_TIMEOUT_TIMES_LIMIT) {
@@ -3598,21 +3732,22 @@ VOID aisFsmRunEventJoinTimeout(IN P_ADAPTER_T prAdapter, ULONG ulParam)
 	P_AIS_FSM_INFO_T prAisFsmInfo;
 	ENUM_AIS_STATE_T eNextState;
 	OS_SYSTIME rCurrentTime;
+	P_MSG_SAA_FSM_COMP_T prSaaFsmCompMsg;
 
 	DEBUGFUNC("aisFsmRunEventJoinTimeout()");
 	prAisBssInfo = &prAdapter->rWifiVar.arBssInfo[NETWORK_TYPE_AIS_INDEX];
 	prAisFsmInfo = &(prAdapter->rWifiVar.rAisFsmInfo);
 	eNextState = prAisFsmInfo->eCurrentState;
+	DBGLOG(AIS, INFO, "aisFsmRunEventJoinTimeout,CurrentState[%d]\n" , prAisFsmInfo->eCurrentState);
 
 	GET_CURRENT_SYSTIME(&rCurrentTime);
 	switch (prAisFsmInfo->eCurrentState) {
-	case AIS_STATE_JOIN:
-		DBGLOG(AIS, LOUD, "EVENT- JOIN TIMEOUT\n");
 
+	case AIS_STATE_JOIN:
 		/* 1. Do abort JOIN */
 		aisFsmStateAbort_JOIN(prAdapter);
 		aisAddBlacklist(prAdapter, prAisFsmInfo->prTargetBssDesc);
-
+#if 0
 		/* 2. Increase Join Failure Count */
 		prAisFsmInfo->prTargetBssDesc->ucJoinFailureCount++;
 /* For JB nl802.11 */
@@ -3633,6 +3768,25 @@ VOID aisFsmRunEventJoinTimeout(IN P_ADAPTER_T prAdapter, ULONG ulParam)
 			kalIndicateStatusAndComplete(prAdapter->prGlueInfo, WLAN_STATUS_CONNECT_INDICATION, NULL, 0);
 			eNextState = AIS_STATE_IDLE;
 		}
+#else
+
+		/* keep eNextState the same (so will not do action here), and do action in aisFsmRunEventJoinComplete */
+		prSaaFsmCompMsg = cnmMemAlloc(prAdapter, RAM_TYPE_MSG, sizeof(MSG_SAA_FSM_COMP_T));
+		if (!prSaaFsmCompMsg) {
+			DBGLOG(AIS, WARN, "aisFsmRunEventJoinTimeout memory alloc fail!\n");
+			return;
+		}
+		prSaaFsmCompMsg->rMsgHdr.eMsgId = MID_SAA_AIS_JOIN_COMPLETE;
+		prSaaFsmCompMsg->ucSeqNum = prAisFsmInfo->ucSeqNumOfReqMsg;
+		prSaaFsmCompMsg->rJoinStatus = WLAN_STATUS_FAILURE;
+		prSaaFsmCompMsg->prStaRec = prAisFsmInfo->prTargetStaRec;
+		prSaaFsmCompMsg->prSwRfb = NULL;
+		/* joint complete only use it when rJoinStatus is WLAN_STATUS_SUCCESS*/
+		/* NOTE(Kevin): Set to UNBUF for immediately JOIN complete */
+		aisFsmRunEventJoinComplete(prAdapter, (P_MSG_HDR_T) prSaaFsmCompMsg);
+		eNextState = prAisFsmInfo->eCurrentState;
+#endif
+
 		break;
 
 	case AIS_STATE_NORMAL_TR:
@@ -3665,6 +3819,13 @@ VOID aisFsmRunEventDeauthTimeout(IN P_ADAPTER_T prAdapter, ULONG ulParam)
 {
 	aisDeauthXmitComplete(prAdapter, NULL, TX_RESULT_LIFE_TIMEOUT);
 }
+#if CFG_SUPPORT_DETECT_SECURITY_MODE_CHANGE
+VOID aisFsmRunEventSecModeChangeTimeout(IN P_ADAPTER_T prAdapter, ULONG ulParamPtr)
+{
+	DBGLOG(AIS, INFO, "Beacon security mode change timeout, trigger disconnect!\n");
+	aisBssSecurityChanged(prAdapter);
+}
+#endif
 
 #if defined(CFG_TEST_MGMT_FSM) && (CFG_TEST_MGMT_FSM != 0)
 /*----------------------------------------------------------------------------*/
@@ -3881,6 +4042,7 @@ VOID aisFsmRunEventChGrant(IN P_ADAPTER_T prAdapter, IN P_MSG_HDR_T prMsgHdr)
 	P_MSG_CH_GRANT_T prMsgChGrant;
 	UINT_8 ucTokenID;
 	UINT_32 u4GrantInterval;
+	UINT_32 u4Entry = 0;
 
 	ASSERT(prAdapter);
 	ASSERT(prMsgHdr);
@@ -3896,6 +4058,9 @@ VOID aisFsmRunEventChGrant(IN P_ADAPTER_T prAdapter, IN P_MSG_HDR_T prMsgHdr)
 	cnmMemFree(prAdapter, prMsgHdr);
 
 	if (prAisFsmInfo->eCurrentState == AIS_STATE_REQ_CHANNEL_JOIN && prAisFsmInfo->ucSeqNumOfChReq == ucTokenID) {
+		/*release timer*/
+		cnmTimerStopTimer(prAdapter, &prAisFsmInfo->rChannelTimeoutTimer);
+
 		/* 2. channel privilege has been approved */
 		prAisFsmInfo->u4ChGrantedInterval = u4GrantInterval;
 
@@ -3908,7 +4073,10 @@ VOID aisFsmRunEventChGrant(IN P_ADAPTER_T prAdapter, IN P_MSG_HDR_T prMsgHdr)
 		prAisFsmInfo->fgIsInfraChannelFinished = FALSE;
 
 		/* 3.3 switch to join state */
-		aisFsmSteps(prAdapter, AIS_STATE_JOIN);
+		if (!prAdapter->rWifiVar.rConnSettings.fgUseOkc ||
+			(rsnSearchPmkidEntry(prAdapter, prAisFsmInfo->prTargetBssDesc->aucBSSID, &u4Entry) &&
+			prAdapter->rWifiVar.rAisSpecificBssInfo.arPmkidCache[u4Entry].fgPmkidExist))
+			aisFsmSteps(prAdapter, AIS_STATE_JOIN);
 
 		prAisFsmInfo->fgIsChannelGranted = TRUE;
 	} else if (prAisFsmInfo->eCurrentState == AIS_STATE_REQ_REMAIN_ON_CHANNEL &&
@@ -4010,7 +4178,7 @@ VOID aisBssBeaconTimeout(IN P_ADAPTER_T prAdapter)
 		}
 	}
 	/* 4 <2> invoke abort handler */
-	if (fgDoAbortIndication) {
+	if (fgDoAbortIndication && (prAdapter->rWifiVar.rAisFsmInfo.u4PostponeIndStartTime == 0)) {
 #if 0
 		P_CONNECTION_SETTINGS_T prConnSettings;
 
@@ -4546,6 +4714,9 @@ VOID aisFsmRunEventChannelTimeout(IN P_ADAPTER_T prAdapter, ULONG ulParam)
 	prAisFsmInfo = &(prAdapter->rWifiVar.rAisFsmInfo);
 	prAisBssInfo = &(prAdapter->rWifiVar.arBssInfo[NETWORK_TYPE_AIS_INDEX]);
 
+	DBGLOG(AIS, INFO, "aisFsmRunEventChannelTimeout, CurrentState = [%d]\n"
+		, prAisFsmInfo->eCurrentState);
+
 	if (prAisFsmInfo->eCurrentState == AIS_STATE_REMAIN_ON_CHANNEL) {
 		/* 1. release channel */
 		aisFsmReleaseCh(prAdapter);
@@ -4564,6 +4735,19 @@ VOID aisFsmRunEventChannelTimeout(IN P_ADAPTER_T prAdapter, ULONG ulParam)
 			aisFsmSteps(prAdapter, AIS_STATE_NORMAL_TR);
 		else
 			aisFsmSteps(prAdapter, AIS_STATE_IDLE);
+	} else if (prAisFsmInfo->eCurrentState == AIS_STATE_REQ_CHANNEL_JOIN) {
+		/* 1. release channel */
+		aisFsmReleaseCh(prAdapter);
+
+		/* 2. stop channel timeout timer */
+		cnmTimerStopTimer(prAdapter, &prAisFsmInfo->rChannelTimeoutTimer);
+
+		prAisFsmInfo->fgIsInfraChannelFinished = FALSE;
+
+		prAisFsmInfo->fgIsChannelGranted = FALSE;
+		/* 3 switch to idle state */
+		aisFsmSteps(prAdapter, AIS_STATE_IDLE);
+
 	} else {
 		DBGLOG(AIS, WARN, "Unexpected remain_on_channel timeout event\n");
 #if DBG
@@ -4582,12 +4766,17 @@ aisFsmRunEventMgmtFrameTxDone(IN P_ADAPTER_T prAdapter,
 	P_AIS_FSM_INFO_T prAisFsmInfo;
 	P_AIS_MGMT_TX_REQ_INFO_T prMgmtTxReqInfo = (P_AIS_MGMT_TX_REQ_INFO_T) NULL;
 	BOOLEAN fgIsSuccess = FALSE;
+	P_WLAN_MAC_HEADER_T prWlanFrame = NULL;
+	P_WLAN_ACTION_FRAME prActFrame = NULL;
+	UINT_16 u2TxFrameCtrl = 0;
 
 	do {
 		ASSERT_BREAK((prAdapter != NULL) && (prMsduInfo != NULL));
 
 		prAisFsmInfo = &(prAdapter->rWifiVar.rAisFsmInfo);
 		prMgmtTxReqInfo = &(prAisFsmInfo->rMgmtTxInfo);
+		prWlanFrame = (P_WLAN_MAC_HEADER_T) prMsduInfo->prPacket;
+		u2TxFrameCtrl = (prWlanFrame->u2FrameCtrl) & MASK_FRAME_TYPE;
 
 		if (rTxDoneStatus != TX_RESULT_SUCCESS) {
 			DBGLOG(AIS, ERROR, "Mgmt Frame TX Fail, Status:%d.\n", rTxDoneStatus);
@@ -4597,6 +4786,23 @@ aisFsmRunEventMgmtFrameTxDone(IN P_ADAPTER_T prAdapter,
 		}
 
 		if (prMgmtTxReqInfo->prMgmtTxMsdu == prMsduInfo) {
+			if (u2TxFrameCtrl == MAC_FRAME_ACTION) {
+				prActFrame = (P_WLAN_ACTION_FRAME) prMsduInfo->prPacket;
+				if (prActFrame->ucCategory == CATEGORY_PUBLIC_ACTION) {
+					switch (prActFrame->ucAction) {
+					case PUBLIC_ACTION_GAS_INITIAL_REQ:
+						DBGLOG(AIS, INFO, "Send GAS Initial Request frame successfully\n");
+						break;
+					case PUBLIC_ACTION_GAS_INITIAL_RESP:
+						DBGLOG(AIS, INFO, "Send GAS Initial Response frame successfully\n");
+						break;
+					default:
+						DBGLOG(AIS, TRACE, "Send other public action frame(%u) successfully\n",
+							prActFrame->ucAction);
+						break;
+					}
+				}
+			}
 			kalIndicateMgmtTxStatus(prAdapter->prGlueInfo,
 						prMgmtTxReqInfo->u8Cookie,
 						fgIsSuccess, prMsduInfo->prPacket, (UINT_32) prMsduInfo->u2FrameLength);
@@ -4609,6 +4815,22 @@ aisFsmRunEventMgmtFrameTxDone(IN P_ADAPTER_T prAdapter,
 	return WLAN_STATUS_SUCCESS;
 
 }				/* aisFsmRunEventMgmtFrameTxDone */
+
+VOID aisFsmRunEventSetOkcPmk(IN P_ADAPTER_T prAdapter)
+{
+	P_AIS_FSM_INFO_T prAisFsmInfo = &prAdapter->rWifiVar.rAisFsmInfo;
+
+	if (prAisFsmInfo->eCurrentState == AIS_STATE_REQ_CHANNEL_JOIN &&
+		prAisFsmInfo->fgIsChannelGranted)
+		aisFsmSteps(prAdapter, AIS_STATE_JOIN);
+	cnmTimerStopTimer(prAdapter, &prAisFsmInfo->rWaitOkcPMKTimer);
+}
+
+static VOID aisFsmSetOkcTimeout(IN P_ADAPTER_T prAdapter, ULONG ulParam)
+{
+	DBGLOG(AIS, WARN, "Wait OKC PMKID timeout\n");
+	aisFsmSteps(prAdapter, AIS_STATE_JOIN);
+}
 
 WLAN_STATUS
 aisFuncTxMgmtFrame(IN P_ADAPTER_T prAdapter,
@@ -4789,7 +5011,7 @@ aisQueryBlackList(P_ADAPTER_T prAdapter, P_BSS_DESC_T prBssDesc)
 		return prBssDesc->prBlack;
 
 	LINK_FOR_EACH_ENTRY(prEntry, prBlackList, rLinkEntry, struct AIS_BLACKLIST_ITEM) {
-		if (EQUAL_MAC_ADDR(prBssDesc->aucBSSID, prEntry) &&
+		if (EQUAL_MAC_ADDR(prBssDesc->aucBSSID, prEntry->aucBSSID) &&
 			EQUAL_SSID(prBssDesc->aucSSID, prBssDesc->ucSSIDLen,
 			prEntry->aucSSID, prEntry->ucSSIDLen)) {
 			prBssDesc->prBlack = prEntry;
@@ -4834,7 +5056,7 @@ static VOID aisRemoveDisappearedBlacklist(P_ADAPTER_T prAdapter)
 	LINK_FOR_EACH_ENTRY_SAFE(prEntry, prNextEntry, prBlackList, rLinkEntry, struct AIS_BLACKLIST_ITEM) {
 		fgDisappeared = TRUE;
 		LINK_FOR_EACH_ENTRY(prBssDesc, prBSSDescList, rLinkEntry, BSS_DESC_T) {
-			if (prBssDesc->prBlack == prEntry || (EQUAL_MAC_ADDR(prBssDesc->aucBSSID, prEntry) &&
+			if (prBssDesc->prBlack == prEntry || (EQUAL_MAC_ADDR(prBssDesc->aucBSSID, prEntry->aucBSSID) &&
 				EQUAL_SSID(prBssDesc->aucSSID, prBssDesc->ucSSIDLen,
 				prEntry->aucSSID, prEntry->ucSSIDLen))) {
 				fgDisappeared = FALSE;

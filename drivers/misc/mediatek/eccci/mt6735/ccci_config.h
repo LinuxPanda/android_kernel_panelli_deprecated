@@ -103,7 +103,7 @@
 /*================================================*/
 #define AP_PLATFORM_INFO    "MT6735E1"
 #define CCCI_MTU            (3584-128)
-#define CCCI_NET_MTU        (1568)
+#define CCCI_NET_MTU        (1500)
 #define SKB_POOL_SIZE_4K    (256)	/*2*MD */
 #define SKB_POOL_SIZE_1_5K  (256)	/*2*MD */
 #define SKB_POOL_SIZE_16    (64)	/*2*MD */

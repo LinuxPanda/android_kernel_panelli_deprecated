@@ -14,11 +14,13 @@
 #include "mt-plat/mt_hotplug_strategy.h"
 #include "gl_typedef.h"
 #include <mt_vcore_dvfs.h>
+#include "config.h"
 
 UINT_8 u1VcoreEnb = 0;
 
 INT32 kalBoostCpu(UINT_32 core_num)
 {
+#if CFG_SUPPORT_CPU_BOOST
 	UINT_32 cpu_num;
 
 	pr_warn("enter kalBoostCpu, core_num:%d\n", core_num);
@@ -31,6 +33,7 @@ INT32 kalBoostCpu(UINT_32 core_num)
 		cpu_num = 1; /* denali default core is 1*/
 
 	hps_set_cpu_num_base(BASE_WIFI, cpu_num, 0);
+#if defined(CONFIG_ARCH_MT6735M)
 	if ((core_num >= 3) && (u1VcoreEnb == 0)) {
 		vcorefs_request_dvfs_opp(KIR_WIFI, OPPI_PERF);
 		u1VcoreEnb = 1;
@@ -38,6 +41,10 @@ INT32 kalBoostCpu(UINT_32 core_num)
 		vcorefs_request_dvfs_opp(KIR_WIFI, OPPI_UNREQ);
 		u1VcoreEnb = 0;
 	}
+#endif
+#else
+	pr_warn("enter kalBoostCpu(Not SUPPORT CPU BOOST), core_num:%d\n", core_num);
+#endif
 	return 0;
 }
 
