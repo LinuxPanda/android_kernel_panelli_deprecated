@@ -402,10 +402,14 @@ KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -fno-strict-aliasing -fno-common \
 		   -Werror-implicit-function-declaration \
 		   -Wno-format-security \
-		   -std=gnu89 \
-		   -march=armv8-a -mtune=cortex-a53 \
+		   -std=gnu89
+
+# Cortex A53 performance flags
+KBUILD_CFLAGS	+= -march=armv8-a -mtune=cortex-a53 \
 		   -mfloat-abi=softfp -mfpu=neon-fp-armv8
-# ^^ Cortex A53 performance flags
+
+# Pipe makes the compilation process faster (Disable if GCC crashes)
+KBUILD_CFLAGS	+= -pipe
 
 KBUILD_AFLAGS_KERNEL :=
 KBUILD_CFLAGS_KERNEL :=

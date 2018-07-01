@@ -1,4 +1,4 @@
-menuconfig ARCH_MEDIATEK
+config ARCH_MEDIATEK
 	bool "Mediatek MT65xx & MT81xx SoC" if ARCH_MULTI_V7
 	select ARM_GIC
 	select PINCTRL
