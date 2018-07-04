@@ -8,6 +8,10 @@
 #define UT_TLOG_VERSION			(2)
 #define UT_TYPE_STRING			(1)
 #define TLOG_SIZE			(256 * 1024)
+//zhangheting@wind-mobi.com add teei patch 20170523 start
+//#define MAX_LOG_LEN			(256)
+#define MAX_LOG_LEN			(250)
+//zhangheting@wind-mobi.com add teei patch 20170523 end
 
 /********************************************
 	structures for LOG IRQ handler
@@ -32,8 +36,6 @@ struct ut_log_entry {
 	int type;
 	char context;
 	char reserve;
-	char reserve2;
-	char reserve3;
 };
 
 /********************************************
@@ -51,6 +53,6 @@ struct utgate_log_head {
  *********************************************/
 static struct tlog_struct tlog_ent[TLOG_MAX_CNT];
 extern unsigned long tlog_message_buff;
-extern struct workqueue_struct *secure_wq;
+extern struct work_queue *secure_wq;
 extern int irq_call_flag;
 extern struct semaphore smc_lock;
