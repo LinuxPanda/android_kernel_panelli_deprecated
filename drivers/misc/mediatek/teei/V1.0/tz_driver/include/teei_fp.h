@@ -43,5 +43,4 @@ extern unsigned long teei_config_flag;
 
 extern int get_current_cpuid(void);
 extern void invoke_fastcall(void);
-extern void ut_pm_mutex_lock(struct mutex *lock);
-extern void ut_pm_mutex_unlock(struct mutex *lock);
+

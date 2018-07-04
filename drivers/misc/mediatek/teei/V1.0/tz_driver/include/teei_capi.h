@@ -1,3 +1,4 @@
+static int print_context(void);
 
 struct NQ_head {
 	unsigned int start_index;

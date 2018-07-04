@@ -816,6 +816,7 @@ config ARCH_MT6735
 	select HAVE_SMP
 	select NEED_MACH_MEMORY_H
 	select IRQ_DOMAIN
+	select IRQ_DOMAIN_DEBUG
 	select GENERIC_SCHED_CLOCK
 	select VFP_OPT
 	select ARCH_REQUIRE_GPIOLIB
@@ -834,6 +835,7 @@ config ARCH_MT6735
 	select CRYPTO_SHA2_ARM_CE
 	select ARM_ERRATA_836870
 	select MTK_IRQ_NEW_DESIGN
+	select MTK_IRQ_NEW_DESIGN_DEBUG
 	select MTK_POWER_GS
 	select MTK_CPU_STRESS
 	help
@@ -852,7 +854,6 @@ config ARCH_MT6735M
 	select GENERIC_SCHED_CLOCK
 	select VFP_OPT
 	select ARCH_REQUIRE_GPIOLIB
-	select MTK_SYSTRACKER
 	select MTK_SYS_CIRQ
 	select MTK_EIC
 	select MTK_GIC
@@ -867,9 +868,7 @@ config ARCH_MT6735M
 	select CRYPTO_AES_ARM32_CE
 	select CRYPTO_SHA2_ARM_CE
 	select ARM_ERRATA_836870
-	select MTK_IRQ_NEW_DESIGN
 	select MTK_POWER_GS
-	select MTK_CPU_STRESS
 	help
 	  This enables support for MediaTek MT6735M
 	  Support for k35mv1
@@ -886,6 +885,7 @@ config ARCH_MT6753
 	select HAVE_SMP
 	select NEED_MACH_MEMORY_H
 	select IRQ_DOMAIN
+	select IRQ_DOMAIN_DEBUG
 	select GENERIC_SCHED_CLOCK
 	select VFP_OPT
 	select ARCH_REQUIRE_GPIOLIB
@@ -905,6 +905,7 @@ config ARCH_MT6753
 	select MTK_BASE_POWER
 	select ARM_ERRATA_836870
 	select MTK_IRQ_NEW_DESIGN
+	select MTK_IRQ_NEW_DESIGN_DEBUG
 	select MTK_POWER_GS
 	select MTK_CPU_STRESS
 	help
@@ -925,6 +926,7 @@ config ARCH_MT6580
 	select HAVE_SMP
 	select NEED_MACH_MEMORY_H
 	select IRQ_DOMAIN
+	select IRQ_DOMAIN_DEBUG
 	select GENERIC_SCHED_CLOCK
 	select VFP_OPT
 	select ARCH_REQUIRE_GPIOLIB
@@ -939,6 +941,7 @@ config ARCH_MT6580
 	select PINCTRL
 	select PINCTRL_MT6580
 	select MFD_SYSCON
+	select MTK_DEBUG_LATCH
 	select MTK_LASTPC
 	select CPU_IDLE
 	select ARM_MT6735_CPUIDLE
@@ -947,6 +950,7 @@ config ARCH_MT6580
 	select MTK_POWER_GS
 	select MTK_CPU_STRESS
 	select MTK_IRQ_NEW_DESIGN
+	select MTK_IRQ_NEW_DESIGN_DEBUG
 	select MTK_NO_ATF
 	help
 	  This enable support for MediaTek MT6580
@@ -963,6 +967,7 @@ config ARCH_MT6570
 	select HAVE_SMP
 	select NEED_MACH_MEMORY_H
 	select IRQ_DOMAIN
+	select IRQ_DOMAIN_DEBUG
 	select GENERIC_SCHED_CLOCK
 	select VFP_OPT
 	select ARCH_REQUIRE_GPIOLIB
@@ -977,6 +982,7 @@ config ARCH_MT6570
 	select MFD_SYSCON
 	select ARM_ERRATA_814220
 	select MTK_IRQ_NEW_DESIGN
+	select MTK_IRQ_NEW_DESIGN_DEBUG
 	select MTK_NO_ATF
 	select MTK_POWER_GS
 	select MTK_SYS_CIRQ
@@ -996,6 +1002,7 @@ config ARCH_MT6755
 	select HAVE_SMP
 	select NEED_MACH_MEMORY_H
 	select IRQ_DOMAIN
+	select IRQ_DOMAIN_DEBUG
 	select GENERIC_SCHED_CLOCK
 	select ARCH_REQUIRE_GPIOLIB
 	select MTK_SYS_CIRQ
@@ -1014,6 +1021,7 @@ config ARCH_MT6755
 	select MTK_LM_MODE if !MTK_GMO_RAM_OPTIMIZE
 	select POWER_SUPPLY
 	select MTK_IRQ_NEW_DESIGN
+	select MTK_IRQ_NEW_DESIGN_DEBUG
 	select MTK_SYSTRACKER_V2
 	select MTK_TIMER
 	select ARM_ERRATA_855873
@@ -1038,6 +1046,7 @@ config ARCH_MT6757
     select HAVE_SMP
     select NEED_MACH_MEMORY_H
     select IRQ_DOMAIN
+    select IRQ_DOMAIN_DEBUG
     select GENERIC_SCHED_CLOCK
     select MTK_SYS_CIRQ
     select MTK_EIC
@@ -1075,6 +1084,7 @@ config ARCH_MT8127
 	select HAVE_SMP
 	select NEED_MACH_MEMORY_H
 	select IRQ_DOMAIN
+	select IRQ_DOMAIN_DEBUG
 	select ARCH_REQUIRE_GPIOLIB
 	select KERNEL_MODE_NEON
 	select CRYPTO_AES_ARM_BS
@@ -1099,6 +1109,7 @@ config ARCH_MT7623
     select HAVE_SMP
     select NEED_MACH_MEMORY_H
     select IRQ_DOMAIN
+    select IRQ_DOMAIN_DEBUG
     select ARCH_REQUIRE_GPIOLIB
     select KERNEL_MODE_NEON
     select CRYPTO_AES_ARM_BS
