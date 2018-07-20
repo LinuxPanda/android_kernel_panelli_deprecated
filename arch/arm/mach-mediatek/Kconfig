@@ -1,17 +1,110 @@
-config ARCH_MEDIATEK
-	bool "Mediatek MT65xx & MT81xx SoC" if ARCH_MULTI_V7
-	select ARM_GIC
-	select PINCTRL
-	select MTK_TIMER
-	help
-          Support for Mediatek MT65xx & MT81xx SoCs
-
 if ARCH_MEDIATEK
+menu "Mediatek SoC Type"
 
-config MACH_MT2701
-	bool "MediaTek MT2701 SoCs support"
-	default n
-	select MFD_SYSCON
-	select MTK_BASE_POWER
+config ARCH_MT6735
+	bool "MediaTek MT6735"
+  select ARCH_REQUIRE_GPIOLIB
+  select ARM_ERRATA_836870
+  select ARM_GIC
+  select COMMON_CLK if !MTK_CLKMGR
+  select CRYPTO_AES_ARM32_CE
+  select CRYPTO_SHA2_ARM_CE
+  select KERNEL_MODE_NEON
+  select MTK_EIC
+  select MTK_GIC
+  select MTK_POWER_GS
+  select PINCTRL_MT6735
+  select VFP_OPT
+	help
+	  This enable support for MediaTek MT6735
 
+config ARCH_MT6735M
+	bool "MediaTek MT6735M"
+  select ARCH_REQUIRE_GPIOLIB
+  select ARM_ERRATA_836870
+  select ARM_GIC
+  select ARM_MT6735_CPUIDLE
+  select CRYPTO_AES_ARM32_CE
+  select CRYPTO_SHA2_ARM_CE
+  select KERNEL_MODE_NEON
+  select MTK_EIC
+  select MTK_GIC
+  select MTK_POWER_GS
+  select PINCTRL_MT6735
+  select VFP_OPT
+	help
+	  This enables support for MediaTek MT6735M
+	  Support for k35mv1
+	  Support for k35mv1_op01
+	  Support for k35mv1_op02
+
+config ARCH_MT6753
+	bool "MediaTek MT6753"
+	select ARCH_REQUIRE_GPIOLIB
+	select ARM_ERRATA_836870
+  select ARM_GIC
+	select ARM_MT6735_CPUIDLE
+	select CRYPTO_AES_ARM32_CE
+	select CRYPTO_SHA2_ARM_CE
+	select KERNEL_MODE_NEON
+  select MTK_EIC
+  select MTK_GIC
+  select MTK_POWER_GS
+  select PINCTRL_MT6735
+  select VFP_OPT
+	help
+	  This enable support for MediaTek MT6753
+	  To enable related drivers
+	  Support for k53v1 related projects
+	  Support for k53v1_op02_1g
+
+config ARCH_MT6755
+  bool "MediaTek MT6755"
+  select ARCH_REQUIRE_GPIOLIB
+  select ARM_ERRATA_855873
+  select ARM_GIC
+  select COMMON_CLK if !MTK_CLKMGR
+  select CRYPTO_AES_ARM32_CE
+  select CRYPTO_SHA2_ARM_CE
+  select KERNEL_MODE_NEON
+  select MTK_EIC
+  select MTK_GIC
+  select MTK_POWER_GS
+  select MTK_LM_MODE if !MTK_GMO_RAM_OPTIMIZE
+  select MTK_TIMER
+  select PINCTRL_MT6755
+  select POWER_SUPPLY
+	help
+	  This enable support for MediaTek MT6755
+
+config ARCH_MT6755_TURBO
+	bool "MediaTek MT6755 Turbo"
+	help
+	  This enables support for MediaTek MT6755 turbo mode
+	  Support for k55tv1 related projects
+	  CPU: 1.25 + 2.15 GHZ
+	  GPU: 800 MHZ
+
+config ARCH_MT6757
+  bool "MediaTek MT6757"
+  select ARMV7_COMPAT
+  select ARMV7_COMPAT_CPUINFO
+  select MTK_EIC
+  select MTK_EIC_HISTORY_DUMP
+  select MTK_GIC_V3_EXT
+  select ARM_GIC_V3
+  select MTK_LM_MODE
+  select MTK_TIMER
+  select PINCTRL_MT6757
+  select POWER_SUPPLY
+  help
+    This enables support for MediaTek MT6757
+    Support for aarch64/aarch32 Architecture
+    Support for fpga6757_64 related projects
+    Support for evb6757_64 related projects
+    Support for k57_64 related projects
+
+endmenu
 endif
+
+source "drivers/misc/mediatek/mach/Kconfig"
