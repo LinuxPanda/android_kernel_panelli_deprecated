@@ -657,6 +657,7 @@ config ARCH_MEDIATEK
 	select ARCH_HAS_CPUFREQ
 	select ARM_AMBA
 	select ARM_HAS_SG_CHAIN
+	select MTK_TIMER
 	select CPU_IDLE
 	select CPU_V7
 	select HAVE_SMP
@@ -670,7 +671,7 @@ config ARCH_MEDIATEK
 	select NEED_MACH_MEMORY_H
 	select PINCTRL
 	help
-	  Support for Mediatek MT673x & MT675x SoCs
+	  Support for Mediatek MT67xx SoCs
 
 config ARCH_MSM
 	bool "Qualcomm MSM (non-multiplatform)"

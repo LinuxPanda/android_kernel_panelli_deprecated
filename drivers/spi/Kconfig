@@ -53,6 +53,9 @@ if SPI_MASTER
 
 comment "SPI Master Controller Drivers"
 
+# Include MTK SPI in Master List
+source "drivers/spi/mediatek/Kconfig"
+
 config SPI_ALTERA
 	tristate "Altera SPI Controller"
 	select SPI_BITBANG
@@ -646,8 +649,7 @@ config SPI_TLE62X0
 #
 
 endif # SPI_MASTER
-#mediatek
-source "drivers/spi/mediatek/Kconfig"
+
 # (slave support would go here)
 
 endif # SPI
