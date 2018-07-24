@@ -464,13 +464,7 @@ unsigned int set_bat_charging_current_limit(int current_limit)
 {
 	CHR_CURRENT_ENUM chr_type_ichg = 0;
 	CHR_CURRENT_ENUM chr_type_aicr = 0;
-	
-	//zhanyoufei@wind-mobi.com 20161116 begin
-	#ifndef CONFIG_WIND_THERMAL_CURRENT
-	return 0; 
-	#endif
-	//zhanyoufei@wind-mobi.com 20161116 end
-	
+
 	mutex_lock(&g_ichg_access_mutex);
 	if (current_limit != -1) {
 		g_bcct_flag = 1;
@@ -1129,11 +1123,6 @@ PMU_STATUS BAT_BatteryHoldAction(void)
 	return PMU_STATUS_OK;
 }
 
-//zhanyoufei@wind-mobi.com 20161121 begin
-#ifdef CONFIG_WIND_BATTERY_MODIFY 
-extern unsigned int g_batt_temp_status ;
-#endif
-//zhanyoufei@wind-mobi.com 20161121 end
 
 PMU_STATUS BAT_BatteryStatusFailAction(void)
 {
@@ -1159,29 +1148,7 @@ PMU_STATUS BAT_BatteryStatusFailAction(void)
 	BMT_status.POSTFULL_charging_time = 0;
 
 	/*  Disable charger */
-	//zhanyoufei@wind-mobi.com 20160127 begin
-	#ifdef CONFIG_WIND_BATTERY_MODIFY
-	BMT_status.charger_vol=battery_meter_get_charger_voltage();
-	if((BMT_status.charger_vol < (V_CHARGER_MAX-300))&&(BMT_status.charger_protect_status == charger_OVER_VOL)&&(g_batt_temp_status ==TEMP_POS_NORMAL))
-	{	
-		BMT_status.bat_charging_state = CHR_CC;
-		charging_enable = KAL_TRUE;
-		BMT_status.charger_protect_status = 0;
-	}
-	else if((BMT_status.charger_vol > (V_CHARGER_MIN+300))&&(BMT_status.charger_protect_status == charger_UNDER_VOL)&&(g_batt_temp_status ==TEMP_POS_NORMAL))
-	{
-		BMT_status.bat_charging_state = CHR_CC;
-		charging_enable = KAL_TRUE;
-		BMT_status.charger_protect_status = 0;
-	}
-	else 
-	{
-		charging_enable = KAL_FALSE;
-	}
-	#else
 	charging_enable = KAL_FALSE;
-	#endif
-	//zhanyoufei@wind-mobi.com 20161121 end
 	battery_charging_control(CHARGING_CMD_ENABLE, &charging_enable);
 
 	/* Disable PE+/PE+20 */

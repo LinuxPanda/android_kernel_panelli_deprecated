@@ -39,9 +39,7 @@
 #define USB_CHARGER_CURRENT_CONFIGURED		CHARGE_CURRENT_500_00_MA
 
 #define USB_CHARGER_CURRENT					CHARGE_CURRENT_500_00_MA
-//zhanyoufei@wind-mobi.com 20161116 begin
-#define AC_CHARGER_CURRENT					CHARGE_CURRENT_1250_00_MA
-//zhanyoufei@wind-mobi.com 20161116 end
+#define AC_CHARGER_CURRENT					CHARGE_CURRENT_800_00_MA
 #define NON_STD_AC_CHARGER_CURRENT			CHARGE_CURRENT_500_00_MA
 #define CHARGING_HOST_CHARGER_CURRENT       CHARGE_CURRENT_650_00_MA
 #define APPLE_0_5A_CHARGER_CURRENT          CHARGE_CURRENT_500_00_MA
@@ -54,9 +52,6 @@
 #define BATTERY_AVERAGE_SIZE 30
 
 /* charger error check */
-//zhanyoufei@wind-mobi.com 20161206 begin
-#define BAT_LOW_TEMP_PROTECT_ENABLE 
-//zhanyoufei@wind-mobi.com 20161206 end
 #define V_CHARGER_ENABLE 0				/* 1:ON , 0:OFF	*/
 #define V_CHARGER_MAX 6500				/* 6.5 V	*/
 #define V_CHARGER_MIN 4400				/* 4.4 V	*/
@@ -76,9 +71,7 @@
 //#define BATTERY_NOTIFY_CASE_0005_TOTAL_CHARGINGTIME
 */
 /* High battery support */
-//zhanyoufei@wind-mobi.com 20161205 begin
 #define HIGH_BATTERY_VOLTAGE_SUPPORT
-//zhanyoufei@wind-mobi.com 20161205 end
 
 /* JEITA parameter */
 /*#define MTK_JEITA_STANDARD_SUPPORT*/
