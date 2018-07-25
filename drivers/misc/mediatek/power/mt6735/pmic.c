@@ -2179,7 +2179,7 @@ static DEFINE_MUTEX(bat_percent_notify_mutex);
 
 #define BPCB_NUM 16
 
-int g_battery_percent_level = 1;
+int g_battery_percent_level = 0;
 int g_battery_percent_stop = 0;
 
 #define BAT_PERCENT_LINIT 15
@@ -3927,7 +3927,6 @@ void PMIC_INIT_SETTING_V1(void)
 		ret = pmic_config_interface(0xEA6, 0x1, 0x3, 6);
 		ret = pmic_config_interface(0xEB8, 0x1, 0x1, 14);
 		ret = pmic_config_interface(0xF4A, 0xB, 0xF, 4);
-		ret = pmic_config_interface(0xF48, 0x0, 0x1, 0);
 		ret = pmic_config_interface(0xF54, 0x0, 0x7, 1);
 		ret = pmic_config_interface(0xF62, 0x3, 0xF, 0);
 		ret = pmic_config_interface(0xF6C, 0x2, 0x1F, 0);
@@ -4058,6 +4057,7 @@ void PMIC_INIT_SETTING_V1(void)
 		ret = pmic_config_interface(0xEA6, 0x1, 0x3, 4);
 		ret = pmic_config_interface(0xEA6, 0x1, 0x3, 6);
 		ret = pmic_config_interface(0xEB8, 0x1, 0x1, 14);
+		ret = pmic_config_interface(0xF48, 0x0, 0x1, 0);
 		ret = pmic_config_interface(0xF4A, 0xB, 0xF, 4);
 		ret = pmic_config_interface(0xF54, 0x0, 0x7, 1);
 		ret = pmic_config_interface(0xF62, 0x3, 0xF, 0);
