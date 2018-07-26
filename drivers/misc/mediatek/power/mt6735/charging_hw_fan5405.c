@@ -156,7 +156,13 @@ static u32 charging_hw_init(void *data)
 
 	fan5405_reg_config_interface(0x00, 0xC0);	/* kick chip watch dog */
 	fan5405_reg_config_interface(0x01, 0xb8);	/* TE=1, CE=0, HZ_MODE=0, OPA_MODE=0 */
-	fan5405_reg_config_interface(0x05, 0x03);
+/*
+ * Note:
+ * 1) Revert back the reg interface to 0x04.
+ * 2) But the above ISAFE config works only with 0x03. ¯\_(ツ)_/¯
+ * 3) *godzilla-facepalm*
+*/
+	fan5405_reg_config_interface(0x05, 0x04);
 	if (!charging_init_flag) {
 		fan5405_reg_config_interface(0x04, 0x1A);	/* 146mA */
 		charging_init_flag = KAL_TRUE;
