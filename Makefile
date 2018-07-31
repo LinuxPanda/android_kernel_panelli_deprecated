@@ -403,7 +403,7 @@ KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -Werror-implicit-function-declaration \
 		   -Wno-format-security \
 		   -std=gnu89 \
-		   -march=armv8-a -mfpu=crypto-neon-fp-armv8 \
+		   -march=armv7-a -mfpu=neon \
 		   -mfloat-abi=softfp -mtune=cortex-a53
 
 # Pipe makes the compilation process faster (Disable if GCC crashes)
