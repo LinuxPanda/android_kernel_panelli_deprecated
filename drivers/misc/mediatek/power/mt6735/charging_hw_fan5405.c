@@ -138,19 +138,31 @@ static u32 charging_hw_init(void *data)
 	mt_set_gpio_mode(wireless_charger_gpio_number, 0);	/* 0:GPIO mode */
 	mt_set_gpio_dir(wireless_charger_gpio_number, 0);	/* 0: input, 1: output */
 #endif
-	//zhanyoufei@wind-mobi.com 20160222 begin
+
+/*
+ * LinuxPanda
+ * Default values were incorrect. So changed values according to actual specs.
+ * http://www.onsemi.com/PowerSolutions/product.do?id=FAN5405
+ *
+ * Note:
+ * 1) Don't understand why Decimal values are used in place of Hex??
+ * 2) Hex values cause boot loop. ¯\_(ツ)_/¯
+*/
 	#ifdef HIGH_BATTERY_VOLTAGE_SUPPORT
-	fan5405_reg_config_interface(0x06, 0x77);
+	fan5405_reg_config_interface(0x06, 0x77); /* ISAFE = 1150mA, VSAFE = 4.44V */
 	#else
-	fan5405_reg_config_interface(0x06, 0x70);
-	#endif	
-	//zhanyoufei@wind-mobi.com 20160222 end
-	
+	fan5405_reg_config_interface(0x06, 0x70); /* ISAFE = 550mA, VSAFE = 3.54V */
+	#endif
+
 	fan5405_reg_config_interface(0x00, 0xC0);	/* kick chip watch dog */
 	fan5405_reg_config_interface(0x01, 0xb8);	/* TE=1, CE=0, HZ_MODE=0, OPA_MODE=0 */
-	//zhanyoufei@wind-mobi.com 20170223 begin
+/*
+ * Note:
+ * 1) Revert back the reg interface to 0x04.
+ * 2) But the above ISAFE config works only with 0x03. ¯\_(ツ)_/¯
+ * 3) *godzilla-facepalm*
+*/
 	fan5405_reg_config_interface(0x05, 0x04);
-	//zhanyoufei@wind-mobi.com 20170223 end
 	if (!charging_init_flag) {
 		fan5405_reg_config_interface(0x04, 0x1A);	/* 146mA */
 		charging_init_flag = KAL_TRUE;

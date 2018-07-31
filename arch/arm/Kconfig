@@ -660,6 +660,7 @@ config ARCH_MEDIATEK
 	select MTK_TIMER
 	select CPU_IDLE
 	select CPU_V7
+	select DT_IDLE_STATES
 	select HAVE_SMP
 	select IRQ_DOMAIN
 	select GENERIC_CLOCKEVENTS
