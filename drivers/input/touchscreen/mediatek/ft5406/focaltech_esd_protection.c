@@ -64,7 +64,7 @@ static int g_esd_protection_checking = 0;//
 /*******************************************************************************
 * Global variable or extern global variabls/functions
 *******************************************************************************/
-extern void ctp_esd_check_func(void);
+
 /*******************************************************************************
 * Static function prototypes
 *******************************************************************************/
@@ -186,7 +186,6 @@ static int fts_esd_protection_check(void)
 {
 	g_esd_protection_checking = 1;
 	g_esd_protection_use_i2c = 1;
-	ctp_esd_check_func();
 	g_esd_protection_use_i2c = 0;
 	g_esd_protection_checking = 0;
 	return 0;

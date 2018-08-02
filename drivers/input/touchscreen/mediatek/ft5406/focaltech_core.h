@@ -1,4 +1,3 @@
-//qiumeng@wind-mobi.com add at 20161109 begin
 /*
  *
  * FocalTech TouchScreen driver.
@@ -113,7 +112,6 @@
 #define TPD_KEYS                					{ KEY_MENU, KEY_HOMEPAGE, KEY_BACK}
 #define TPD_KEYS_DIM            					{{80,900,20,TPD_BUTTON_HEIGH}, {240,900,20,TPD_BUTTON_HEIGH}, {400,900,20,TPD_BUTTON_HEIGH}}
 #define FT_ESD_PROTECT  									0
-#define CTP_ESD_PROTECT							1 //tuwenzan@wind-mobi.com add at 20160602
 /*********************Custom Define end*************************************************/
 #define MT_PROTOCOL_B
 #define A_TYPE												0
@@ -148,10 +146,6 @@
 //#define TPD_RES_Y                					1280//800
 #define TPD_CALIBRATION_MATRIX  			{962,0,0,0,1600,0,0,0};
 #define FT_PROXIMITY_ENABLE				0
-//qiumeng@wind-mobi.com 20161212 begin
-#define TPD_PROXIMITY 1
-//qiumeng@wind-mobi.com 20161212 end
-//yinyapeng add for upgrade ==>
 //#define TPD_AUTO_UPGRADE
 //#define TPD_HAVE_CALIBRATION
 //#define TPD_HAVE_TREMBLE_ELIMINATION
@@ -170,7 +164,7 @@
 
 /*register address*/
 #define FTS_REG_CHIP_ID						0xA3    			// chip ID 
-#define FTS_REG_FW_VER						0xA6   			// FW  version  //qiumeng@wind-mobi.com 20161209
+#define FTS_REG_FW_VER						0xA6   			// FW  version 
 #define FTS_REG_VENDOR_ID					0xA8   			// TP vendor ID 
 #define FTS_REG_POINT_RATE					0x88   			// report rate	
 #define TPD_MAX_POINTS_2                        		2
@@ -186,11 +180,12 @@
 #define FTS_GESTURE_OUTPUT_ADRESS 		0xD3
 #define FTS_GESTURE_OUTPUT_UNIT_LENGTH 	4
 
-/*#define KEY_GESTURE_U 						KEY_U
+#define KEY_GESTURE_U 						KEY_U
 #define KEY_GESTURE_UP 						KEY_UP
 #define KEY_GESTURE_DOWN 					KEY_DOWN
 #define KEY_GESTURE_LEFT 					KEY_LEFT 
 #define KEY_GESTURE_RIGHT 					KEY_RIGHT
+#define KEY_GESTURE_C 						KEY_C
 #define KEY_GESTURE_O 						KEY_O
 #define KEY_GESTURE_E 						KEY_E
 #define KEY_GESTURE_M 						KEY_M 
@@ -199,7 +194,7 @@
 #define KEY_GESTURE_S 						KEY_S 
 #define KEY_GESTURE_V 						KEY_V
 #define KEY_GESTURE_Z 						KEY_Z
-*/
+
 #define GESTURE_LEFT						0x20
 #define GESTURE_RIGHT						0x21
 #define GESTURE_UP		    					0x22
@@ -280,7 +275,7 @@ struct fts_ts_data {
 * Global variable or extern global variabls/functions
 *******************************************************************************/
 // Function Switchs: define to open,  comment to close
-#define FTS_GESTRUE_EN 							0
+#define FTS_GESTRUE_EN 							1
 #define MTK_EN 									1
 #define FTS_APK_DEBUG
 #define SYSFS_DEBUG
@@ -291,10 +286,10 @@ struct fts_ts_data {
 //qiumeng@wind-mobi.com 20160419 end
 
 #ifdef TPD_AUTO_UPGRADE
-#define Boot_Upgrade_Protect			//开机升级保护。升级失败后，再次开机可重新升级
+#define Boot_Upgrade_Protect
 #endif
 //change CHIP_ID & Vendor_ID ---qiumeng@wind-mobi.com add 20170426 begin
-#define FTS_CHIP_ID			0x54	//FT3427、FT5x46 CHIP ID = 0x54 FT5436i chip id = 0x12
+#define FTS_CHIP_ID			0x54	//FT3427\A1\A2FT5x46 CHIP ID = 0x54 FT5436i chip id = 0x12
 #define FTS_Vendor_1_ID		0x01    //Ofilm TP VID 
 //modify shenyue TP vendor id --qiumeng@wind-mobi.com 20161209 begin
 #define FTS_Vendor_2_ID		0x02    //shenyue TP VID  
@@ -356,4 +351,3 @@ extern int fts_create_apk_debug_channel(struct i2c_client * client);
 #endif
 #endif*/
 #endif
-//qiumeng@wind-mobi.com add at 20161109 end

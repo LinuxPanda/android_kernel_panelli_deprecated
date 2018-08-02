@@ -1,4 +1,3 @@
-//qiumeng@wind-mobi.com add at 20161109 begin
 /* Copyright Statement:
  *
  * This software/firmware and related documentation ("MediaTek Software") are
@@ -70,50 +69,16 @@
 #include <linux/of_gpio.h>
 #include <linux/of_irq.h>
 
-//qiumeng@wind-mobi.com 20161212 begin
-#ifdef TPD_PROXIMITY
-#include <hwmsensor.h>
-#include <hwmsen_dev.h>
-#include <sensors_io.h>
-#endif
-//qiumeng@wind-mobi.com 20161212 end
 
 #ifdef CONFIG_MTK_SENSOR_HUB_SUPPORT
 #include <mach/md32_ipi.h>
 #include <mach/md32_helper.h>
 #endif
-//tuwenzan@wind-mobi.com modify at 20160608 begin
-#if CTP_ESD_PROTECT
-//define and implement in focaltech_esd_protection.c
-extern int  fts_esd_protection_init(void);
-extern int  fts_esd_protection_exit(void);
-extern int  fts_esd_protection_notice(void);
-extern int  fts_esd_protection_suspend(void);
-extern int  fts_esd_protection_resume(void);
-//qiumeng@wind-mobi.com 20170111 begin
-extern u32 headset_flag;
-//qiumeng@wind-mobi.com 20170111 end
-int apk_debug_flag = 0;
-//int  power_switch_gesture = 0;
-//#define TPD_ESD_CHECK_CIRCLE        		200
-//static struct delayed_work ctp_esd_check_work;
-//static struct workqueue_struct *ctp_esd_check_workqueue = NULL;
-void ctp_esd_check_func(void);
-static int count_irq = 0;
-#endif
-//tuwenzan@wind-mobi.com modify at 20160608 end
 
 //wangpengpeng@wind-mobi.com 20170714 begin
 static int tp_proximity = 0;
 //wangpengpeng@wind-mobi.com 20170714 end
 
-//qiumeng@wind-mobi.com 20160324 begin
-#ifdef CONFIG_WIND_DEVICE_INFO
-extern u16 g_ctp_fwvr;
-extern u16 g_ctp_vendor;
-extern char g_ctp_id_str[21];
-#endif
-//qiumeng@wind-mobi.com 20160324 end
 
 #ifdef CONFIG_MTK_SENSOR_HUB_SUPPORT
 enum DOZE_T {
@@ -212,17 +177,6 @@ static int tpd_flag;
 /*static int point_num = 0;
 static int p_point_num = 0;*/
 
-//qiumeng@wind-mobi.com 20161212 begin
-#ifdef TPD_PROXIMITY
-#define APS_ERR(fmt,arg...)           	printk("<<proximity>> "fmt"\n",##arg)
-#define TPD_PROXIMITY_DEBUG(fmt,arg...) printk("<<proximity>> "fmt"\n",##arg)
-#define TPD_PROXIMITY_DMESG(fmt,arg...) printk("<<proximity>> "fmt"\n",##arg)
-static u8 tpd_proximity_flag 			= 0;
-static u8 tpd_proximity_suspend 		= 0;
-static u8 tpd_proximity_detect 		= 10;//0-->close ; 10--> far away
-static u8 tpd_proximity_detect_prev	= 0xff;//0-->close ; 1--> far away
-#endif
-//qiumeng@wind-mobi.com 20161212 end
 unsigned int tpd_rst_gpio_number = 0;
 unsigned int tpd_int_gpio_number = 1;
 unsigned int touch_irq = 0;
@@ -734,7 +688,6 @@ static void tpd_down(int x, int y, int p, int id)
 #else
 	{
 #endif
-        
 		input_report_abs(tpd->dev, ABS_MT_TRACKING_ID, id);
 		TPD_DEBUG("%s x:%d y:%d p:%d\n", __func__, x, y, p);
 		input_report_key(tpd->dev, BTN_TOUCH, 1);
@@ -742,7 +695,6 @@ static void tpd_down(int x, int y, int p, int id)
 		input_report_abs(tpd->dev, ABS_MT_POSITION_X, x);
 		input_report_abs(tpd->dev, ABS_MT_POSITION_Y, y);
 		input_mt_sync(tpd->dev);
-	
 	}
 }
 
@@ -764,8 +716,6 @@ static void tpd_up(int x, int y,int id)
 		TPD_DEBUG("%s x:%d y:%d\n", __func__, x, y);
 		input_report_key(tpd->dev, BTN_TOUCH, 0);
 		input_mt_sync(tpd->dev);
-
-
 	}
 }
 
@@ -877,156 +827,12 @@ static int tpd_touchinfo(struct touch_info *cinfo, struct touch_info *pinfo)
 
 };
 
-//qiumeng@wind-mobi.com 20161212 begin
-#ifdef TPD_PROXIMITY
-static int tpd_get_ps_value(void)
-{
-	return tpd_proximity_detect;
-}
-
-static int tpd_enable_ps(int enable)
-{
-	//u8 state, state2;
-	u8 state;
-	int ret = -1;
-
-	fts_read_reg(i2c_client, 0xB0, &state);
-
-	TPD_PROXIMITY_DEBUG("[proxi_5206]read: 999 0xb0's value is 0x%02X\n", state); //qiumeng
-	if (enable){
-	    printk("qiumeng3----\n");
-		state |= 0x01;
-		tpd_proximity_flag = 1;
-		TPD_PROXIMITY_DEBUG("[proxi_5206]ps function is on\n");
-	}else{
-		state &= 0x00;
-		tpd_proximity_flag = 0;
-		TPD_PROXIMITY_DEBUG("[proxi_5206]ps function is off\n");
-	}
-
-	ret = fts_write_reg(i2c_client, 0xB0, state);
-
-	TPD_PROXIMITY_DEBUG("[proxi_5206]write: 0xB0's value is 0x%02X\n", state);
-
-//	fts_read_reg(i2c_client, 0xB0, &state2);
-	//if(state!=state2)
-//	{
-	//	tpd_proximity_flag=0;
-	//	TPD_PROXIMITY_DEBUG("[proxi_5206]ps fail!!! state = 0x%x,  state2 =  0x%X\n", state,state2); //qiumeng
-	//}
-
-	return 0;
-}
-
-static int tpd_ps_operate(void* self, uint32_t command, void* buff_in, int size_in,
-		void* buff_out, int size_out, int* actualout)
-{
-	int err = 0;
-	int value;
-
-	hwm_sensor_data *sensor_data;
-	TPD_DEBUG("[proxi_5206]command = 0x%02X\n", command);
-//wangpengpeng@wind-mobi.com 20170714 begin
-
-	if(tp_proximity == 0)
-		return -EINVAL;
-
-//wangpengpeng@wind-mobi.com 20170714 end
-	switch (command)
-	{
-		case SENSOR_DELAY:
-			if((buff_in == NULL) || (size_in < sizeof(int)))
-			{
-				APS_ERR("Set delay parameter error!\n");
-				err = -EINVAL;
-			}
-			// Do nothing
-			break;
-
-		case SENSOR_ENABLE:
-			if((buff_in == NULL) || (size_in < sizeof(int)))
-			{
-				APS_ERR("Enable sensor parameter error!\n");
-				err = -EINVAL;
-			}
-			else
-			{
-				value = *(int *)buff_in;
-				if(value)
-				{ 
-					if((tpd_enable_ps(1) != 0))
-					{
-						APS_ERR("enable ps fail: %d\n", err);
-						return -1;
-					}
-				}
-				else
-				{
-					if((tpd_enable_ps(0) != 0))
-					{
-						APS_ERR("disable ps fail: %d\n", err);
-						return -1;
-					}
-				}
-			}
-			break;
-
-		case SENSOR_GET_DATA:
-			if((buff_out == NULL) || (size_out< sizeof(hwm_sensor_data)))
-			{
-				APS_ERR("get sensor data parameter error!\n");
-				err = -EINVAL;
-			}
-			else
-			{
-
-				sensor_data = (hwm_sensor_data *)buff_out;
-
-				sensor_data->values[0] = tpd_get_ps_value();
-				TPD_PROXIMITY_DEBUG("huang sensor_data->values[0] 1082 = %d\n", sensor_data->values[0]);
-				sensor_data->value_divide = 1;
-				sensor_data->status = SENSOR_STATUS_ACCURACY_MEDIUM;
-			}
-			break;
-		default:
-			APS_ERR("proxmy sensor operate function no this parameter %d!\n", command);
-			err = -1;
-			break;
-	}
-
-	return err;
-}
-#endif
-//qiumeng@wind-mobi.com 20161212 end
 
 #if defined (CONFIG_MTK_I2C_EXTENSION) && defined (CONFIG_FT_AUTO_UPGRADE_SUPPORT)
 
 int fts_i2c_read(struct i2c_client *client, char *writebuf,int writelen, char *readbuf, int readlen)
 {
 	int ret=0;
-//tuwenzan@wind-mobi.com modify at 20160602 begin
-#if CTP_ESD_PROTECT
-		int i = 0;
-		//	fts_esd_protection_notice();
-		for(i = 0; i < 3; i++)
-		{
-			ret = fts_esd_protection_notice();
-			if(0 == ret)
-				break;	// can use I2C
-			else
-			{
-				//FTS_COMMON_DBG("[focal] fts_esd_protection_notice return :%d \n", ret);
-				continue;
-			}
-		}
-		if(3 == i)
-		{
-		//	FTS_COMMON_DBG("[focal] ESD are still use I2C. \n");
-		}
-
-		
-#endif
-//tuwenzan@wind-mobi.com modify at 20160602 end
 	mutex_lock(&i2c_rw_access);
 	if((NULL!=client) && (writelen>0) && (writelen<=128))
 	{
@@ -1050,11 +856,6 @@ int fts_i2c_write(struct i2c_client *client, char *writebuf, int writelen)
 {
 	int i = 0;
 	int ret = 0;
-//tuwenzan@wind-mobi.com modify at 20160602 begin
-	#if CTP_ESD_PROTECT
-	fts_esd_protection_notice();
-    #endif
-//tuwenzan@wind-mobi.com modify at 20160602 end
 	if (writelen <= 8) {
 	    client->ext_flag = client->ext_flag & (~I2C_DMA_FLAG);
 		return i2c_master_send(client, writebuf, writelen);
@@ -1169,15 +970,6 @@ int fts_read_reg(struct i2c_client *client, u8 regaddr, u8 *regvalue)
 
 }
 
-#if USB_CHARGE_DETECT
-//qiumeng@wind-mobi.com 20160503 begin
-//extern int FG_charging_status ;
-//extern bool gFG_Is_Charging;
-extern bool bat_is_charger_exist(void);
-//qiumeng@wind-mobi.com 20160503 end
-int close_to_ps_flag_value = 1;	// 1: close ; 0: far away
-int charging_flag = 0;
-#endif
 static int touch_event_handler(void *unused)
 {
 	int i = 0;
@@ -1185,23 +977,10 @@ static int touch_event_handler(void *unused)
 	int ret = 0;
 	u8 state = 0;
 	#endif
-	//qiumeng@wind-mobi.com 20161212 begin
-	#ifdef TPD_PROXIMITY
-	int err;
-	u8 state1 = 0;
-	hwm_sensor_data sensor_data;
-	u8 proximity_status;
-    #endif
-	//qiumeng@wind-mobi.com 20161212 end
-	#if USB_CHARGE_DETECT
-	u8 data;
-	#endif
+
 	struct touch_info cinfo, pinfo, finfo;
 	struct sched_param param = { .sched_priority = 4 };
-	/*tuwenzan@wind-mobi.com 20160722 start ***/
-	struct file	*filp;
-	u8 check_flag = 0;
-	/*tuwenzan@wind-mobi.com 20160722 end ***/
+
 	if (tpd_dts_data.use_tpd_button) {
 		memset(&finfo, 0, sizeof(struct touch_info));
 		for (i = 0; i < TPD_SUPPORT_POINTS; i++)
@@ -1219,53 +998,6 @@ static int touch_event_handler(void *unused)
 
 		set_current_state(TASK_RUNNING);
 
-#if USB_CHARGE_DETECT
-//qiumeng@wind-mobi.com 20160503 begin
-		//if((FG_charging_status != 0) && (charging_flag == 0))
-		//if((gFG_Is_Charging != false) && (charging_flag == 0))
-			/*tuwenzan@wind-mobi.com 20160722 start ***/
-	if(check_flag == 0){
-		filp = filp_open("/sys/devices/platform/battery/ADC_Charger_Voltage", O_RDONLY, 0);
-		if (IS_ERR(filp)) {
-            pr_err("open /sys/devices/platform/battery/ADC_Charger_Voltage fail !!!! and check_flag =%d\n",check_flag);
-		}else{
-			check_flag = 1;
-			filp_close(filp,NULL);
-		}
-	}
-	if(check_flag ==1){
-		if((bat_is_charger_exist() != false) && (charging_flag == 0))
-//qiumeng@wind-mobi.com 20160503 end
-		{
-			data = 0x1;
-			charging_flag = 1;
-			fts_write_reg(i2c_client, 0x8B, 0x01);  
-		}
-		else
-		{    
-//qiumeng@wind-mobi.com 20160503 begin		    
-			//if((FG_charging_status == 0) && (charging_flag == 1))
-			//if((gFG_Is_Charging == false) && (charging_flag == 1))
-			if((bat_is_charger_exist() == false) && (charging_flag == 1))
-//qiumeng@wind-mobi.com 20160503 end
-			{
-				charging_flag = 0;
-				data = 0x0;
-				fts_write_reg(i2c_client, 0x8B, 0x00);  					
-			}
-		}
-	}
-#endif
-//qiumeng@wind-mobi.com 20170111 begin
-	if(headset_flag == 1)
-	{
-		fts_write_reg(i2c_client, 0xc3, 0x03); 
-	}else{
-		fts_write_reg(i2c_client, 0xc3, 0x00); 
-	}
-//qiumeng@wind-mobi.com 20170111 end	
-
-/*tuwenzan@wind-mobi.com 20160722 end ***/
 		#if FTS_GESTRUE_EN
 			ret = fts_read_reg(fts_i2c_client, 0xd0,&state);
 			if (ret<0)
@@ -1281,56 +1013,8 @@ static int touch_event_handler(void *unused)
 		    	}
 		 #endif
 
-		//TPD_DEBUG("touch_event_handler start\n");
-//qiumeng@wind-mobi.com 20161212 begin
-#ifdef TPD_PROXIMITY
-//sunsiyuan@wind-mobi.com 20170803 begin
-				 if (tpd_proximity_flag == 1)
-				 {
-				     printk("qiumeng1----\n");
-				 	 fts_read_reg(i2c_client, 0xB0, &state1);
-					 printk("proxi_5206 0xB0 state value is 1131 0x%02X\n", state1);
-                     
-					 if(!(state1&0x01))
-					 {
-					     printk("qiumeng2----\n");
-						 tpd_enable_ps(1);
-					 }
-				 	 fts_read_reg(i2c_client, 0x01, &proximity_status);
-					 printk("proxi_5206 0x01 value is 1139 0x%02X\n", proximity_status);
+		TPD_DEBUG("touch_event_handler start\n");
 
-					 if (proximity_status == 0xC0)
-					 {
-						 tpd_proximity_detect = 0;//near
-					 }
-					 else if(proximity_status == 0xE0)
-					 {
-						 tpd_proximity_detect = 10;//far
-					 }
-
-					 TPD_PROXIMITY_DEBUG("tpd_proximity_detect 1149 = %d\n", tpd_proximity_detect);
-
-					 if(tpd_proximity_detect != tpd_proximity_detect_prev)
-					 {
-						 tpd_proximity_detect_prev = tpd_proximity_detect;
-						 sensor_data.values[0] = tpd_get_ps_value();
-						 sensor_data.value_divide = 1;
-						 sensor_data.status = SENSOR_STATUS_ACCURACY_MEDIUM;
-						 if ((err = hwmsen_get_interrupt_data(ID_PROXIMITY, &sensor_data)))
-						 {
-							 TPD_PROXIMITY_DMESG(" proxi_5206 call hwmsen_get_interrupt_data failed= %d\n", err);
-						 }
-						TPD_PROXIMITY_DEBUG("tpd_proximity_detect value %d\n",tpd_get_ps_value());//lipaheng@wind-mobi.com add for debug 20160928
-					 }
-				 }
-//sunsiyuan@wind-mobi.com 20170803 end
-#endif
-//qiumeng@wind-mobi.com 20161212 end
-//tuwenzan@wind-mobi.com modify at 20160602 begin
-#if CTP_ESD_PROTECT
-					 apk_debug_flag = 1;
-#endif
-//tuwenzan@wind-mobi.com modify at 20160602 end
 		if (tpd_touchinfo(&cinfo, &pinfo)) {
 			if (tpd_dts_data.use_tpd_button) {
 				if (cinfo.p[0] == 0)
@@ -1387,11 +1071,6 @@ static int touch_event_handler(void *unused)
 			input_sync(tpd->dev);
 
 		}
-//tuwenzan@wind-mobi.com modify at 20160602 begin
-		#if CTP_ESD_PROTECT
-			apk_debug_flag = 0;
-       #endif
-//tuwenzan@wind-mobi.com modify at 20160602 end
 	} while (!kthread_should_stop());
 
 	TPD_DEBUG("touch_event_handler exit\n");
@@ -1410,11 +1089,6 @@ static irqreturn_t tpd_eint_interrupt_handler(int irq, void *dev_id)
 {
 	//TPD_DEBUG("TPD interrupt has been triggered\n");
 	tpd_flag = 1;
-	//tuwenzan@wind-mobi.com modify at 20160602 begin
-	#if CTP_ESD_PROTECT
-	count_irq ++;
-    #endif
-	//tuwenzan@wind-mobi.com modify at 20160602 end
 	wake_up_interruptible(&waiter);
 	return IRQ_HANDLED;
 }
@@ -1531,12 +1205,7 @@ static int tpd_probe(struct i2c_client *client, const struct i2c_device_id *id)
 	int reset_count = 0;
 	char data;
 	int err = 0;
-//qiumeng@wind-mobi.com 20161212 begin
-#ifdef TPD_PROXIMITY
-	struct hwmsen_object obj_ps;
-	obj_ps.polling = 0;//interrupt mode
-#endif
-//qiumeng@wind-mobi.com 20161212 end
+
 	i2c_client = client;
 	fts_i2c_client = client;
 	fts_input_dev=tpd->dev;
@@ -1564,7 +1233,6 @@ static int tpd_probe(struct i2c_client *client, const struct i2c_device_id *id)
 	msg_dma_alloct();
 
 #ifdef CONFIG_FT_AUTO_UPGRADE_SUPPORT
-
 
     if (NULL == tpd_i2c_dma_va)
     {
@@ -1682,11 +1350,7 @@ reset_proc:
 	}
 
 	/* tpd_load_status = 1; */
-	//tuwenzan@wind-mobi.com modify at 20160602 begin
-    #if CTP_ESD_PROTECT
-	fts_esd_protection_init();
-     #endif
-	 //tuwenzan@wind-mobi.com modify at 20160602 end
+
 	thread_tpd = kthread_run(touch_event_handler, 0, TPD_DEVICE);
 	if (IS_ERR(thread_tpd)) {
 		retval = PTR_ERR(thread_tpd);
@@ -1704,23 +1368,9 @@ reset_proc:
 
 		fts_read_reg(client, 0xA6, &ver);
 		ctp_fw_version = ver;
-		//qiumeng@wind-mobi.com 20160325 begin
-	    //Get fw version
-		#ifdef CONFIG_WIND_DEVICE_INFO
-	    g_ctp_fwvr = ver; 
-		#endif
-	    //qiumeng@wind-mobi.com 20160325 end
 		
 		TPD_DMESG(TPD_DEVICE " fts_read_reg version : %d\n", ver);
         fts_read_reg(client, 0xA8, &ver);
-		//qiumeng@wind-mobi.com 20160325 begin
-		//Get vendor version
-		#ifdef CONFIG_WIND_DEVICE_INFO
-	    g_ctp_vendor = ver;
-		#endif
-        //qiumeng@wind-mobi.com 20160325 end		
-		
-       //qiumeng@wind-mobi.com 20160324 begin
 	   //Get TP type
 	    #if 0
 		if(ver==0x51)
@@ -1732,65 +1382,25 @@ reset_proc:
          vendor_name="Rserve";
 		}
 		#endif
-	   //add wind_device_info for A158---qiumeng@wind-mobi.com 20170612 begin
-		if(ver==0x02) //shenyue //modify shenyue TP vendor id --qiumeng@wind-mobi.com 20161209
+		if(ver==0x02)
 		{
          vendor_name="shenyue";
-		 #ifdef CONFIG_WIND_DEVICE_INFO
-		 sprintf(g_ctp_id_str,"FT5346");
-		 #endif
 		}
 		else if(ver==0x01) //o-film
 		 {
          vendor_name="O-Film";
-		 #ifdef CONFIG_WIND_DEVICE_INFO
-		  sprintf(g_ctp_id_str,"FT5346");
-		 #endif
 		 }
-		 //qiumeng@wind-mobi.com 20170426 begin
 		else if(ver==0x10) //dijing
 		 {
          vendor_name="dijing";
-		 #ifdef CONFIG_WIND_DEVICE_INFO
-		  sprintf(g_ctp_id_str,"FT5346");
-		 #endif
 		 }
-		 //qiumeng@wind-mobi.com 20170426 end
-		 //qiumeng@wind-mobi.com 20170607 begin
 		else if(ver==0x03) //yeji
 		 {
          vendor_name="yeji";
-		 #ifdef CONFIG_WIND_DEVICE_INFO
-		  sprintf(g_ctp_id_str,"FT5346");
-		 #endif
 		 }
-		 //qiumeng@wind-mobi.com 20170607 end 
-		else
-		 {
-			#ifdef CONFIG_WIND_DEVICE_INFO
-			sprintf(g_ctp_id_str,"FT-UnKnown");
-			#endif
-		 }
-		
-		//add wind_device_info for A158---qiumeng@wind-mobi.com 20170612 end
-		
-		//printk("vendor_name=%s fwvertion=%x\n",vendor_name,fwvertion);
-		//qiumeng@wind-mobi.com 20160324 end
+
 	}
-//qiumeng@wind-mobi.com 20161212 begin
-#ifdef TPD_PROXIMITY
-	
-	obj_ps.sensor_operate = tpd_ps_operate;
-	if((err = hwmsen_attach(ID_PROXIMITY, &obj_ps)))
-	{
-		TPD_PROXIMITY_DEBUG("proxi_fts attach fail = %d\n", err); //qiumeng
-	}
-	else
-	{
-		TPD_PROXIMITY_DEBUG("proxi_fts attach ok = %d\n", err);   //qiumeng
-	}
-#endif
-//qiumeng@wind-mobi.com 20161212 end
+
 #ifdef CONFIG_MTK_SENSOR_HUB_SUPPORT
 	int ret;
 
@@ -1821,77 +1431,6 @@ static int tpd_remove(struct i2c_client *client)
 
 	return 0;
 }
-//tuwenzan@wind-mobi.com modify at 20160608 begin
-#if CTP_ESD_PROTECT
- /************************************************************************
- * Name: force_reset_guitar
- * Brief: reset
- * Input: no
- * Output: no
- * Return: 0
- ***********************************************************************/
- static void force_reset_guitar(void)
- {
- //tuwenzan@wind-mobi.com modify at 20150607 begin
-	 int retval;
- 	/* Reset CTP */
-//	printk("twz enter reset guitar\n");
-	tpd_gpio_output(tpd_rst_gpio_number, 0);
-	 msleep(10);
-	 retval = regulator_disable(tpd->reg);
-	 if (retval != 0)
-		 TPD_DMESG("Failed to disable reg-vgp6: %d\n", retval);
-	 msleep(200);
-	 retval = regulator_enable(tpd->reg);
-	 if (retval != 0)
-		 TPD_DMESG("Failed to enable reg-vgp6: %d\n", retval);
-	 msleep(10);
-	tpd_gpio_output(tpd_rst_gpio_number, 1);
-	msleep(400);
-	 tpd_gpio_as_int(tpd_int_gpio_number);
-	 msleep(300);
- //tuwenzan@wind-mobi.com modify at 20150607 end
- }
-
-
-#define A3_REG_VALUE					0X54 //0x87 12 tuwenzan@wind-mobi modify this value at 20161028
-//#define RESET_91_REGVALUE_SAMECOUNT 	5
-//tuwenzan@wind-mobi.com modify at 20160608 end
-//tuwenzan@wind-mobi.com modify at 20160608 begin
-void ctp_esd_check_func(void)
-{
-		int i;
-		int ret = -1;
-	 u8 data;
-		int reset_flag = 0;
-
-//	 printk("twz enter ctp_esd_check_func for protect tp\n");
-		for (i = 0; i < 3; i++)
-	 {
-		
-			ret =  fts_read_reg(i2c_client, 0xA3, &data);
-//			printk("focal--fts_esd_check_func-0xA3:%x\n", data);
-			if (ret==1 && A3_REG_VALUE==data) {
-				break;
-			}
-	 }
-	
-		if (i >= 3) {
-		 force_reset_guitar();
-			printk("focal--tpd reset. i >= 3  ret = %d	A3_Reg_Value = 0x%02x\n ", ret, data);
-			reset_flag = 1;
-			goto FOCAL_RESET_A3_REGISTER;
-	 }
-		
-		
-FOCAL_RESET_A3_REGISTER:
-		data=0;
-		// ret = fts_write_reg(i2c_client, 0x8F,data);
-	
-	 return;
- }
-#endif
-//tuwenzan@wind-mobi.com modify at 20160608 end
 
 static int tpd_local_init(void)
 {
@@ -1983,20 +1522,7 @@ static void tpd_resume(struct device *h)
 	retval = regulator_enable(tpd->reg);
 	if (retval != 0)
 		TPD_DMESG("Failed to enable reg-vgp6: %d\n", retval);
-//qiumeng@wind-mobi.com 20161212 begin
-#ifdef TPD_PROXIMITY
-//sunsiyuan@wind-mobi.com 20170803 begin
-		if (tpd_proximity_suspend == 0)
-		{
-			return;
-		}
-		else
-		{
-			tpd_proximity_suspend = 0;
-		}
-//sunsiyuan@wind-mobi.com 20170803 end
-#endif
-//qiumeng@wind-mobi.com 20161212 end
+
 	tpd_gpio_output(tpd_rst_gpio_number, 0);
 	msleep(20);
 	tpd_gpio_output(tpd_rst_gpio_number, 1);
@@ -2018,26 +1544,7 @@ static void tpd_resume(struct device *h)
 #else
 	enable_irq(touch_irq);
 #endif
-#if USB_CHARGE_DETECT
-//qiumeng@wind-mobi.com 20160503 begin
-	//if(FG_charging_status != 0)
-	//if(gFG_Is_Charging != false)
-	if(bat_is_charger_exist() != false)
-//qiumeng@wind-mobi.com 20160503 end
-	{
-		charging_flag = 0;
-	}
-	else
-	{
-		charging_flag = 1;
-	}
-#endif
-//tuwenzan@wind-mobi.com modify at 20160602 begin
-#if CTP_ESD_PROTECT
-	count_irq = 0;
-	fts_esd_protection_resume();
-#endif
-//tuwenzan@wind-mobi.com modify at 20160602 end
+
 }
 
 #ifdef CONFIG_MTK_SENSOR_HUB_SUPPORT
@@ -2061,21 +1568,7 @@ static void tpd_suspend(struct device *h)
 	u8 state = 0;
 	#endif
 	printk("TPD enter sleep\n");
-//qiumeng@wind-mobi.com 20161212 begin
-#ifdef TPD_PROXIMITY
-//sunsiyuan@wind-mobi.com 20170803 begin
-		if (tpd_proximity_flag == 1)
-		{
-			tpd_proximity_suspend = 0;
-			return;
-		}
-		else
-		{
-			tpd_proximity_suspend = 1;
-		}
-//sunsiyuan@wind-mobi.com 20170803 end
-#endif
-//qiumeng@wind-mobi.com 20161212 end
+
 	#if FTS_GESTRUE_EN
         	if(1){
 			//memset(coordinate_x,0,255);
@@ -2203,15 +1696,6 @@ static void tpd_suspend(struct device *h)
 		TPD_DMESG("Failed to disable reg-vgp6: %d\n", retval);
 
 #endif
-//tuwenzan@wind-mobi.com modify at 20160608 begin
-/*release all touch points*/
-input_report_key(tpd->dev, BTN_TOUCH, 0);
-input_mt_sync(tpd->dev);
-input_sync(tpd->dev);
-#if CTP_ESD_PROTECT
-	fts_esd_protection_suspend();
-#endif
-//tuwenzan@wind-mobi.com modify at 20160608 end
 }
 
 static struct tpd_driver_t tpd_device_driver = {
@@ -2245,4 +1729,3 @@ static void __exit tpd_driver_exit(void)
 
 module_init(tpd_driver_init);
 module_exit(tpd_driver_exit);
-//qiumeng@wind-mobi.com add at 20161109 end

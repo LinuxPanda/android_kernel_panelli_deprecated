@@ -1,4 +1,3 @@
-//qiumeng@wind-mobi.com add at 20161109 begin
 /*
  *
  * FocalTech TouchScreen driver.
@@ -41,7 +40,7 @@
 /*******************************************************************************
 * Private constant and macro definitions using #define
 *******************************************************************************/
-//#define  KEY_GESTURE_U						KEY_U
+#define  KEY_GESTURE_U						KEY_U
 #define  KEY_GESTURE_UP						KEY_UP
 #define  KEY_GESTURE_DOWN					KEY_DOWN
 #define  KEY_GESTURE_LEFT					KEY_LEFT 
@@ -54,7 +53,7 @@
 #define  KEY_GESTURE_S						KEY_S 
 #define  KEY_GESTURE_V						KEY_V
 #define  KEY_GESTURE_C                      KEY_C
-//#define  KEY_GESTURE_Z						KEY_Z
+#define  KEY_GESTURE_Z						KEY_Z
 
 #define GESTURE_LEFT							0x20
 #define GESTURE_RIGHT						0x21
@@ -108,26 +107,26 @@ int fts_Gesture_init(struct input_dev *input_dev)
 {
         //init_para(480,854,60,0,0);
 	input_set_capability(input_dev, EV_KEY, KEY_POWER);
-	//input_set_capability(input_dev, EV_KEY, KEY_GESTURE_U); 
-	input_set_capability(input_dev, EV_KEY, KEY_GESTURE_UP); 
+	input_set_capability(input_dev, EV_KEY, KEY_GESTURE_U);
+	input_set_capability(input_dev, EV_KEY, KEY_GESTURE_UP);
 	input_set_capability(input_dev, EV_KEY, KEY_GESTURE_DOWN);
-	input_set_capability(input_dev, EV_KEY, KEY_GESTURE_LEFT); 
-	input_set_capability(input_dev, EV_KEY, KEY_GESTURE_RIGHT); 
+	input_set_capability(input_dev, EV_KEY, KEY_GESTURE_LEFT);
+	input_set_capability(input_dev, EV_KEY, KEY_GESTURE_RIGHT);
 	input_set_capability(input_dev, EV_KEY, KEY_GESTURE_O);
-	input_set_capability(input_dev, EV_KEY, KEY_GESTURE_E); 
-	input_set_capability(input_dev, EV_KEY, KEY_GESTURE_M); 
+	input_set_capability(input_dev, EV_KEY, KEY_GESTURE_E);
+	input_set_capability(input_dev, EV_KEY, KEY_GESTURE_M);
 	input_set_capability(input_dev, EV_KEY, KEY_GESTURE_L);
 	input_set_capability(input_dev, EV_KEY, KEY_GESTURE_W);
-	input_set_capability(input_dev, EV_KEY, KEY_GESTURE_S); 
+	input_set_capability(input_dev, EV_KEY, KEY_GESTURE_S);
 	input_set_capability(input_dev, EV_KEY, KEY_GESTURE_V);
-	//input_set_capability(input_dev, EV_KEY, KEY_GESTURE_Z);
+	input_set_capability(input_dev, EV_KEY, KEY_GESTURE_Z);
 	input_set_capability(input_dev, EV_KEY, KEY_GESTURE_C);
-		
+
 	__set_bit(KEY_GESTURE_RIGHT, input_dev->keybit);
 	__set_bit(KEY_GESTURE_LEFT, input_dev->keybit);
 	__set_bit(KEY_GESTURE_UP, input_dev->keybit);
 	__set_bit(KEY_GESTURE_DOWN, input_dev->keybit);
-	//__set_bit(KEY_GESTURE_U, input_dev->keybit);
+	__set_bit(KEY_GESTURE_U, input_dev->keybit);
 	__set_bit(KEY_GESTURE_O, input_dev->keybit);
 	__set_bit(KEY_GESTURE_E, input_dev->keybit);
 	__set_bit(KEY_GESTURE_M, input_dev->keybit);
@@ -136,7 +135,7 @@ int fts_Gesture_init(struct input_dev *input_dev)
 	__set_bit(KEY_GESTURE_S, input_dev->keybit);
 	__set_bit(KEY_GESTURE_V, input_dev->keybit);
 	__set_bit(KEY_GESTURE_C, input_dev->keybit);
-	//__set_bit(KEY_GESTURE_Z, input_dev->keybit);
+	__set_bit(KEY_GESTURE_Z, input_dev->keybit);
 
 	return 0;
 }
@@ -150,111 +149,70 @@ int fts_Gesture_init(struct input_dev *input_dev)
 *******************************************************************************/
 static void fts_check_gesture(struct input_dev *input_dev,int gesture_id)
 {
-    char *envp[2];
-	printk("fts gesture_id==0x%x\n ",gesture_id);
-    
-	switch(gesture_id)
-	{
-	        case GESTURE_LEFT:
-	                /*input_report_key(input_dev, KEY_GESTURE_LEFT, 1);
-	                input_sync(input_dev);
-	                input_report_key(input_dev, KEY_GESTURE_LEFT, 0);
-	                input_sync(input_dev);*/
-	                envp[0]="GESTURE=LEFT";
-	                break;
-	        case GESTURE_RIGHT:
-	                /*input_report_key(input_dev, KEY_GESTURE_RIGHT, 1);
-	                input_sync(input_dev);
-	                input_report_key(input_dev, KEY_GESTURE_RIGHT, 0);
-	                input_sync(input_dev);*/
-	             envp[0]="GESTURE=RIGHT";
-			    break;
-	        case GESTURE_UP:
-	                /*input_report_key(input_dev, KEY_GESTURE_UP, 1);
-	                input_sync(input_dev);
-	                input_report_key(input_dev, KEY_GESTURE_UP, 0);
-	                input_sync(input_dev);  */
-	                envp[0]="GESTURE=UP";
-	                break;
-	        case GESTURE_DOWN:
-	                /*input_report_key(input_dev, KEY_GESTURE_DOWN, 1);
-	                input_sync(input_dev);
-	                input_report_key(input_dev, KEY_GESTURE_DOWN, 0);
-	                input_sync(input_dev);*/
-	                envp[0]="GESTURE=DOWN";
-	                break;
-	        case GESTURE_DOUBLECLICK:
-	                /*input_report_key(input_dev, KEY_POWER, 1);
-	                input_sync(input_dev);
-	                input_report_key(input_dev, KEY_POWER, 0);
-	                input_sync(input_dev);*/
-	                envp[0]="GESTURE=DOUBLE_CLICK";
-	                break;
-	        case GESTURE_O:
-	                /*input_report_key(input_dev, KEY_GESTURE_O, 1);
-	                input_sync(input_dev);
-	                input_report_key(input_dev, KEY_GESTURE_O, 0);
-	                input_sync(input_dev);*/
-	                envp[0]="GESTURE=O";
-	                break;
-	        case GESTURE_W:
-	                /*input_report_key(input_dev, KEY_GESTURE_W, 1);
-	                input_sync(input_dev);
-	                input_report_key(input_dev, KEY_GESTURE_W, 0);
-	                input_sync(input_dev);*/
-	                envp[0]="GESTURE=W";
-	                break;
-	        case GESTURE_M:
-	                /*input_report_key(input_dev, KEY_GESTURE_M, 1);
-	                input_sync(input_dev);
-	                input_report_key(input_dev, KEY_GESTURE_M, 0);
-	                input_sync(input_dev);*/
-	                envp[0]="GESTURE=M";
-	                break;
-	        case GESTURE_E:
-	                /*input_report_key(input_dev, KEY_GESTURE_E, 1);
-	                input_sync(input_dev);
-	                input_report_key(input_dev, KEY_GESTURE_E, 0);
-	                input_sync(input_dev);*/
-	                envp[0]="GESTURE=E";
-	                break;
-	        case GESTURE_L:
-	                /*input_report_key(input_dev, KEY_GESTURE_L, 1);
-	                input_sync(input_dev);
-	                input_report_key(input_dev, KEY_GESTURE_L, 0);
-	                input_sync(input_dev);*/
-	                envp[0]="GESTURE=L";
-	                break;
-	        case GESTURE_S:
-	                /*input_report_key(input_dev, KEY_GESTURE_S, 1);
-	                input_sync(input_dev);
-	                input_report_key(input_dev, KEY_GESTURE_S, 0);
-	                input_sync(input_dev);*/
-	                envp[0]="GESTURE=S";
-	                break;
-	        case GESTURE_V:
-	                /*input_report_key(input_dev, KEY_GESTURE_V, 1);
-	                input_sync(input_dev);
-	                input_report_key(input_dev, KEY_GESTURE_V, 0);
-	                input_sync(input_dev);*/
-	                envp[0]="GESTURE=V";
-	                break;
-	        /*case GESTURE_Z:
-	                input_report_key(input_dev, KEY_GESTURE_Z, 1);
-	                input_sync(input_dev);
-	                input_report_key(input_dev, KEY_GESTURE_Z, 0);
-	                input_sync(input_dev);
-	                break;*/
-		   case  GESTURE_C:
-		   	        /*input_report_key(input_dev, KEY_GESTURE_C, 1);
-	                input_sync(input_dev);
-	                input_report_key(input_dev, KEY_GESTURE_C, 0);
-	                input_sync(input_dev);*/
-	                envp[0]="GESTURE=C";
-	                break;
-	        default:
-	                break;			
-	        			
+	char *envp[2];
+	int gesture;
+
+	switch (gesture_id) {
+		case GESTURE_LEFT:
+			envp[0] = "GESTURE=LEFT";
+			gesture = KEY_GESTURE_LEFT;
+			break;
+		case GESTURE_RIGHT:
+			envp[0] = "GESTURE=RIGHT";
+			gesture = KEY_GESTURE_RIGHT;
+			break;
+		case GESTURE_UP:
+			envp[0] = "GESTURE=UP";
+			gesture = KEY_GESTURE_UP;
+			break;
+		case GESTURE_DOWN:
+			envp[0] = "GESTURE=DOWN";
+			gesture = KEY_GESTURE_DOWN;
+			break;
+		case GESTURE_DOUBLECLICK:
+			envp[0] = "GESTURE=DOUBLE_CLICK";
+			gesture = KEY_POWER;
+			break;
+		case GESTURE_O:
+			envp[0] = "GESTURE=O";
+			gesture = KEY_GESTURE_O;
+			break;
+		case GESTURE_W:
+			envp[0] = "GESTURE=W";
+			gesture = KEY_GESTURE_W;
+			break;
+		case GESTURE_M:
+			envp[0] = "GESTURE=M";
+			gesture = KEY_GESTURE_M;
+			break;
+		case GESTURE_E:
+			envp[0] = "GESTURE=E";
+			gesture = KEY_GESTURE_E;
+			break;
+		case GESTURE_L:
+			envp[0] = "GESTURE=L";
+			gesture = KEY_GESTURE_L;
+			break;
+		case GESTURE_S:
+			envp[0] = "GESTURE=S";
+			gesture = KEY_GESTURE_S;
+			break;
+		case GESTURE_V:
+			envp[0] = "GESTURE=V";
+			gesture = KEY_GESTURE_V;
+			break;
+		case GESTURE_Z:
+			envp[0] = "GESTURE=Z";
+			gesture = KEY_GESTURE_Z;
+			break;
+		case GESTURE_C:
+			envp[0] = "GESTURE=C";
+			gesture = KEY_GESTURE_C;
+			break;
+		default:
+			envp[0] = "GESTURE=NONE";
+			gesture = -1;
+			break;
 	}
 	envp[1]=NULL;	
 	printk("going to kobject_uevent_env\n");
@@ -362,4 +320,3 @@ int fts_read_Gestruedata(void)
 	return -1;
 }
 #endif
-//qiumeng@wind-mobi.com add at 20161109 end

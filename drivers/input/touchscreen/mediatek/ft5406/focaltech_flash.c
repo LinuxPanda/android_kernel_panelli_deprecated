@@ -115,7 +115,6 @@
 /*******************************************************************************
 * Static variables
 *******************************************************************************/
-// extern u16 g_ctp_vendor; //tuwenzan@wind-mobi.com remove at 20160410
 //add TP firmware ---qiumeng@wind-mobi.com modify at 20170612 begin
 static unsigned char CTPM_FW[] = {
 	#include "FT5x46i_YD_A158_OFilm_Lacrose_VID01_V10_D01_20170703_app.i"
@@ -176,7 +175,7 @@ int fts_8716_ctpm_fw_upgrade(struct i2c_client * client, u8* pbt_buf, u32 dw_len
 int fts_8716_writepram(struct i2c_client * client, u8* pbt_buf, u32 dw_lenth);
 int fts_3x07_ctpm_fw_upgrade(struct i2c_client *client, u8 *pbt_buf, u32 dw_lenth);
 int hidi2c_to_stdi2c(struct i2c_client * client);
-static unsigned char ft5x46_ctpm_VidFWid_get_from_boot(  struct i2c_client *client );
+static unsigned char ft5x46_ctpm_VidFWid_get_from_boot(struct i2c_client *client);
 /************************************************************************
 * Name: hidi2c_to_stdi2c
 * Brief:  HID to I2C
@@ -1287,9 +1286,12 @@ int fts_5x36_ctpm_fw_upgrade(struct i2c_client *client, u8 *pbt_buf, u32 dw_lent
 	u8  	bt_ecc;
 	int	i_ret;
 	int	fw_filenth = sizeof(CTPM_FW);
-	int	fw_filenth1 = sizeof(CTPM_FW1); //tuwenzan@wind-mobi.com add at 20160504
+	int	fw1_filenth = sizeof(CTPM_FW1);
+	int	fw2_filenth = sizeof(CTPM_FW2);
+	int	fw3_filenth = sizeof(CTPM_FW3);
 
-	if((CTPM_FW[fw_filenth-12] == 30) || (CTPM_FW1[fw_filenth1-12] == 30)) //tuwenzan@wind-mobi.com modify at 20160504
+	if((CTPM_FW[fw_filenth-12] == 30) || (CTPM_FW1[fw1_filenth-12] == 30) ||
+     (CTPM_FW2[fw2_filenth-12] == 30) || (CTPM_FW3[fw3_filenth-12] == 30))
 	{
 		is_5336_fwsize_30 = 1;
 	}
@@ -1954,12 +1956,12 @@ int  fts_5x46_ctpm_fw_upgrade(struct i2c_client * client, u8* pbt_buf, u32 dw_le
 		packet_buf[4] = (u8) (lenght >> 8);
 		packet_buf[5] = (u8) lenght;
 		for (i = 0; i < FTS_PACKET_LENGTH; i++) 
-	    {
+		{
 			packet_buf[6 + i] = pbt_buf[j * FTS_PACKET_LENGTH + i];
 			bt_ecc ^= packet_buf[6 + i];
 		}
 		fts_i2c_write(client, packet_buf, FTS_PACKET_LENGTH + 6);
-		msleep(10); //qiumeng@wind-mobi.com 20161129
+		msleep(20);
 		/*
 		for(i = 0;i < 30;i++)
 		{
@@ -3316,41 +3318,44 @@ int fts_ctpm_fw_upgrade_with_app_file(struct i2c_client *client, char *firmware_
 ***********************************************************************/
 int fts_ctpm_get_i_file_ver(u8 tp_vendor_id)
 {
-	//qiumeng@wind-mobi.com 20170607 begin
-	u16 ui_sz,ui_sz1,ui_sz2,ui_sz3;
-	int fw_id = 0;  //qiumeng@wind-mobi.com 20161129
+	u16 ui_sz, cust_ui_sz;
+	int cust_fw_id = 0;
 	ui_sz = sizeof(CTPM_FW);
-	ui_sz1 = sizeof(CTPM_FW1);
-	ui_sz2 = sizeof(CTPM_FW2);
-	ui_sz3 = sizeof(CTPM_FW3);
-		if(tp_vendor_id==0x01) //qiumeng@wind-mobi.com add at 20161129
-		{
-			fw_id = CTPM_FW[ui_sz - 2];
-		}
-		else if (tp_vendor_id==0x02)  //qiumeng@wind-mobi.com add at 20161209
-		{
-			fw_id = CTPM_FW1[ui_sz1 - 2];
-		}
-		else if (tp_vendor_id==0x10)
-		{
-			fw_id = CTPM_FW2[ui_sz2 - 2];
-		}
-		else if (tp_vendor_id==0x03)
-		{
-			fw_id = CTPM_FW3[ui_sz3 - 2];
-		}
+
+	/*panelli*/
+	if(tp_vendor_id==0x01) {
+		cust_ui_sz = sizeof(CTPM_FW);
+		cust_fw_id = CTPM_FW[cust_ui_sz - 2];
+	}
+	else if (tp_vendor_id==0x02) {
+		cust_ui_sz = sizeof(CTPM_FW1);
+		cust_fw_id = CTPM_FW1[cust_ui_sz - 2];
+	}
+	else if (tp_vendor_id==0x02) {
+		cust_ui_sz = sizeof(CTPM_FW2);
+		cust_fw_id = CTPM_FW2[cust_ui_sz - 2];
+	}
+	else if (tp_vendor_id==0x03) {
+		cust_ui_sz = sizeof(CTPM_FW3);
+		cust_fw_id = CTPM_FW3[cust_ui_sz - 2];
+	}
+
 	if (ui_sz > 2)
 	{
 	    if(fts_updateinfo_curr.CHIP_ID==0x36  || fts_updateinfo_curr.CHIP_ID==0x86  || fts_updateinfo_curr.CHIP_ID==0x64)
                 return CTPM_FW[0x10a];
 	    else if(fts_updateinfo_curr.CHIP_ID==0x58)
                 return CTPM_FW[0x1D0A];
-	    else{
-		printk("qiumeng fw_id = %d\n",fw_id);
-		return fw_id; //CTPM_FW[ui_sz - 2];
+			/*panelli*/
+	    else if (tp_vendor_id==0x01 || tp_vendor_id==0x02 ||
+								tp_vendor_id==0x02 || tp_vendor_id==0x03) {
+				printk("panelli cust_fw_id = %d\n", cust_fw_id);
+				return cust_fw_id;
+			}
+	    else
+		return CTPM_FW[ui_sz - 2];
 	}
-	}
-	//qiumeng@wind-mobi.com 20170607 end
+
 	return 0x00;
 }
 /************************************************************************
