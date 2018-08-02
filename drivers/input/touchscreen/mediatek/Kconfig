@@ -24,7 +24,6 @@ config TOUCHSCREEN_MTK
 
 source "drivers/input/touchscreen/mediatek/GT1151/Kconfig"
 
-
 config TOUCHSCREEN_MTK_GT1151TB
 	bool "GT1151 for Mediatek package"
 	default n
@@ -151,9 +150,8 @@ config TOUCHSCREEN_MTK_FT5X0X
 
 source "drivers/input/touchscreen/mediatek/ft5x0x/Kconfig"
 
-## ft5406 tp add for A158 ----qiumeng@wind-mobi.com begin at 20161109
 config TOUCHSCREEN_MTK_FT5406
-	bool "FT5X0X for Mediatek package"
+	bool "FT5406 for Mediatek package"
 	default n
 	help
 	  Say Y here if you have FT5406 touch panel.
@@ -164,7 +162,6 @@ config TOUCHSCREEN_MTK_FT5406
 	  module will be called.
 
 source "drivers/input/touchscreen/mediatek/ft5406/Kconfig"
-## ft5406 tp add for A158 ----qiumeng@wind-mobi.com end at 20161109
 
 config TOUCHSCREEN_MTK_SYNAPTICS_3320_50
 	bool "Synaptics 5.0inch for Mediatek package"

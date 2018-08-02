@@ -80,7 +80,6 @@
 #include <linux/proc_fs.h>
 #include <linux/netdevice.h>
 #include <../fs/proc/internal.h>
-#include "include/tpd_ft5x0x_common.h"
 /*******************************************************************************
 * Private constant and macro definitions using #define
 *******************************************************************************/
@@ -281,9 +280,6 @@ struct fts_ts_data {
 #define SYSFS_DEBUG
 #define TPD_AUTO_UPGRADE  //open firmware upgrade --qiumeng@wind-mobi.com 20161209
 #define MTK_CTP_NODE                     1
-//qiumeng@wind-mobi.com 20160419 begin
-#define USB_CHARGE_DETECT		 1 
-//qiumeng@wind-mobi.com 20160419 end
 
 #ifdef TPD_AUTO_UPGRADE
 #define Boot_Upgrade_Protect
@@ -314,8 +310,8 @@ int fts_rw_iic_drv_init(struct i2c_client *client);
 void  fts_rw_iic_drv_exit(void);
 void fts_get_upgrade_array(void);
 #if FTS_GESTRUE_EN
-extern int fts_Gesture_init(struct input_dev *input_dev);
-extern int fts_read_Gestruedata(void);
+		extern int fts_Gesture_init(struct input_dev *input_dev);
+		extern int fts_read_Gestruedata(void);
 #endif
 extern int fts_write_reg(struct i2c_client *client, u8 regaddr, u8 regvalue);
 extern int fts_read_reg(struct i2c_client *client, u8 regaddr, u8 *regvalue);
@@ -342,12 +338,12 @@ extern int fts_create_apk_debug_channel(struct i2c_client * client);
 /*******************************************************************************
 * Static function prototypes
 *******************************************************************************/
-/*#if	1
+#if 0
 #define FTS_DBG
 #ifdef FTS_DBG
 #define FTS_DBG(fmt, args...) 				printk("[FTS]" fmt, ## args)
 #else
 #define FTS_DBG(fmt, args...) 				do{}while(0)
 #endif
-#endif*/
+#endif
 #endif

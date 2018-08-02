@@ -1,4 +1,3 @@
-//qiumeng@wind-mobi.com add at 20161109 begin
 /*
  *
  * FocalTech fts TouchScreen driver.
@@ -3790,7 +3789,7 @@ static unsigned char ft5x46_ctpm_VidFWid_get_from_boot(  struct i2c_client *clie
 	for (i = 0; i < FTS_UPGRADE_LOOP; i++) 
 	{
 		msleep(100);
-		DBG("[FTS] Step 1:Reset  CTPM\n");
+		printk("[FTS] Step 1:Reset  CTPM\n");
 		/*********Step 1:Reset  CTPM *****/
 #if 0
 		mt_set_gpio_mode(GPIO_CTP_RST_PIN, GPIO_CTP_RST_PIN_M_GPIO);
@@ -3822,7 +3821,7 @@ static unsigned char ft5x46_ctpm_VidFWid_get_from_boot(  struct i2c_client *clie
 		msleep(5);
    
 		/*********Step 2:Enter upgrade mode *****/
-		DBG("[FTS] Step 2:Enter upgrade mode \n");
+		printk("[FTS] Step 2:Enter upgrade mode \n");
 		#if 0
 			auc_i2c_write_buf[0] = FT_UPGRADE_55;
 			auc_i2c_write_buf[1] = FT_UPGRADE_AA;
@@ -3846,11 +3845,11 @@ static unsigned char ft5x46_ctpm_VidFWid_get_from_boot(  struct i2c_client *clie
 		auc_i2c_write_buf[1] = auc_i2c_write_buf[2] = auc_i2c_write_buf[3] =0x00;
 		fts_i2c_read(client, auc_i2c_write_buf, 4, reg_val, 2);
 
-		DBG("[FTS] Step 3: CTPM ID,ID1 = 0x%x,ID2 = 0x%x\n",reg_val[0], reg_val[1]);
+		printk("[FTS] Step 3: CTPM ID,ID1 = 0x%x,ID2 = 0x%x\n",reg_val[0], reg_val[1]);
 		if (reg_val[0] == fts_updateinfo_curr.upgrade_id_1
 			&& reg_val[1] != 0) {
 
-			DBG("[FTS] Step 3 ok: CTPM ID,ID1 = 0x%x,ID2 = 0x%x ,0x%x, 0x%x:\n",
+			printk("[FTS] Step 3 ok: CTPM ID,ID1 = 0x%x,ID2 = 0x%x ,0x%x, 0x%x:\n",
 				reg_val[0], reg_val[1], fts_updateinfo_curr.upgrade_id_1, fts_updateinfo_curr.upgrade_id_2);
 			break;
 		} else {
@@ -3861,13 +3860,13 @@ static unsigned char ft5x46_ctpm_VidFWid_get_from_boot(  struct i2c_client *clie
 	}
 	if (i >= FTS_UPGRADE_LOOP)
 	{
-		DBG("[FTS] FTS_UPGRADE_LOOP is  i = %d \n", i);
+		printk("[FTS] FTS_UPGRADE_LOOP is  i = %d \n", i);
 		return -EIO;
 	}
-	DBG("[FTS] OK: FTS_UPGRADE_LOOP is  i = %d \n", i);
+	printk("[FTS] OK: FTS_UPGRADE_LOOP is  i = %d \n", i);
 	auc_i2c_write_buf[0] = 0xcd;
 	fts_i2c_read(client, auc_i2c_write_buf, 1, reg_val, 1);
-	DBG("[FTS]bootloader version = 0x%x\n", reg_val[0]);
+	printk("[FTS]bootloader version = 0x%x\n", reg_val[0]);
 	auc_i2c_write_buf[0] = 0x03;
 	auc_i2c_write_buf[1] = 0x00;
 	for(i = 0;i < FTS_UPGRADE_LOOP; i++) 
@@ -3877,7 +3876,7 @@ static unsigned char ft5x46_ctpm_VidFWid_get_from_boot(  struct i2c_client *clie
 		i_ret = fts_i2c_write(client, auc_i2c_write_buf, 4);
 		if (i_ret < 0)
 		{
-			DBG( "[FTS] Step 4: read vendor id from flash error when i2c write, i_ret = %d\n", i_ret);
+			printk( "[FTS] Step 4: read vendor id from flash error when i2c write, i_ret = %d\n", i_ret);
 			continue;
 		}
 		//fts_i2c_Read(client, auc_i2c_write_buf, 4, reg_val, 2);
@@ -3885,18 +3884,18 @@ static unsigned char ft5x46_ctpm_VidFWid_get_from_boot(  struct i2c_client *clie
 		i_ret = fts_i2c_read(client, auc_i2c_write_buf, 0, reg_val, 2);
 		if (i_ret < 0)
 		{
-			DBG( "[FTS] Step 4: read vendor id from flash error when i2c write, i_ret = %d\n", i_ret);
+			printk( "[FTS] Step 4: read vendor id from flash error when i2c write, i_ret = %d\n", i_ret);
 			continue;
 		}
 
 		vid = reg_val[1];
 
-		DBG("%s: REG VAL ID1 = 0x%x,ID2 = 0x%x\n", __func__,reg_val[0],reg_val[1]);	
+		printk("%s: REG VAL ID1 = 0x%x,ID2 = 0x%x\n", __func__,reg_val[0],reg_val[1]);	
 		break;
 		
 		
 	}
-	DBG("Step 7: reset the new FW\n");
+	printk("Step 7: reset the new FW\n");
 	auc_i2c_write_buf[0] = 0x07;
 	fts_i2c_write(client, auc_i2c_write_buf, 1);
 	msleep(300);	/*make sure CTP startup normally */
@@ -3962,4 +3961,3 @@ int fts_ctpm_auto_upgrade(struct i2c_client *client)
 	}
 	return 0;
 }
-//qiumeng@wind-mobi.com add at 20161109 end

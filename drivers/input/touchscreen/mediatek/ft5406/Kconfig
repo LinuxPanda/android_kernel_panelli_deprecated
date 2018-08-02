@@ -1,9 +1,7 @@
-##qiumeng@wind-mobi.com add at 20161109 begin
 #
 # Touchscreen driver configuration
 #
 
-## ft5406 tp_simulate_switch ----wangpengpeng@wind-mobi.com begin at 20170714
 config TP_SIMULATE_SWITCH
 	bool "Tp_simulate_switch"
 	default n
@@ -12,18 +10,16 @@ config TP_SIMULATE_SWITCH
 
 	  If you donnot, say N.
 
-## ft5406 tp_simulate_switch ----wangpengpeng@wind-mobi.com end at 20170714
+if TOUCHSCREEN_MTK_FT5406
 
-if TOUCHSCREEN_MTK_FT5436
-
-config FT5X0X_FIRMWARE
-	string "FT5X0X for Mediatek firmware"
+config FT5406_FIRMWARE
+	string "FT5406 for Mediatek firmware"
 
 config TPD_ROTATE_90
-	bool "ft5x0x for Mediatek package"
+	bool "ft5406 for Mediatek package"
 	default n
 	help
-	Say Y here if you have ft5x0x touch panel TPD_ROTATE_90.
+	Say Y here if you have ft5406 touch panel TPD_ROTATE_90.
 
 	If unsure, say N.
 
@@ -31,10 +27,10 @@ config TPD_ROTATE_90
 	module will be called.
 
 config TPD_ROTATE_180
-	bool "ft5x0x for Mediatek package"
+	bool "ft5406 for Mediatek package"
 	default n
 	help
-	Say Y here if you have ft5x0x touch panel TPD_ROTATE_180.
+	Say Y here if you have ft5406 touch panel TPD_ROTATE_180.
 
 	If unsure, say N.
 
@@ -42,10 +38,10 @@ config TPD_ROTATE_180
 	module will be called.
 
 config TPD_ROTATE_270
-	bool "ft5x0x for Mediatek package"
+	bool "ft5406 for Mediatek package"
 	default n
 	help
-	Say Y here if you have ft5x0x touch panel TPD_ROTATE_270.
+	Say Y here if you have ft5406 touch panel TPD_ROTATE_270.
 
 	If unsure, say N.
 
@@ -53,10 +49,10 @@ config TPD_ROTATE_270
 	module will be called.
 
 config FT_AUTO_UPGRADE_SUPPORT
-	bool "ft5x0x for Mediatek package"
-	default y
+	bool "ft5406 for Mediatek package"
+	default n
 	help
-	Say Y here if you have ft5x0x touch panel FT_AUTO_UPGRADE_SUPPORT.
+	Say Y here if you have ft5406 touch panel FT_AUTO_UPGRADE_SUPPORT.
 
 	If unsure, say N.
 
@@ -64,10 +60,10 @@ config FT_AUTO_UPGRADE_SUPPORT
 	module will be called.
 
 config CUST_FTS_APK_DEBUG
-	bool "ft5x0x for Mediatek package"
-	default y
+	bool "ft5406 for Mediatek package"
+	default n
 	help
-	Say Y here if you have ft5x0x touch panel CUST_FTS_APK_DEBUG.
+	Say Y here if you have ft5406 touch panel CUST_FTS_APK_DEBUG.
 
 	If unsure, say N.
 
@@ -75,10 +71,10 @@ config CUST_FTS_APK_DEBUG
 	module will be called.
 
 config TPD_HAVE_CALIBRATION
-	bool "ft5x0x for Mediatek package"
+	bool "ft5406 for Mediatek package"
 	default n
 	help
-	Say Y here if you have ft5x0x touch panel TPD_HAVE_CALIBRATION.
+	Say Y here if you have ft5406 touch panel TPD_HAVE_CALIBRATION.
 
 	If unsure, say N.
 
@@ -86,14 +82,13 @@ config TPD_HAVE_CALIBRATION
 	module will be called.
 
 config TPD_CUSTOM_CALIBRATION
-	bool "ft5x0x for Mediatek package"
+	bool "ft5406 for Mediatek package"
 	default n
 	help
-	Say Y here if you have ft5x0x touch panel TPD_CUSTOM_CALIBRATION.
+	Say Y here if you have ft5406 touch panel TPD_CUSTOM_CALIBRATION.
 
 	If unsure, say N.
 
 	To compile this dirver as a module, choose M here: the
 	module will be called.
 endif
-##qiumeng@wind-mobi.com add at 20161109 end
