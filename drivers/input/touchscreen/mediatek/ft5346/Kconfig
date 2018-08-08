@@ -10,16 +10,16 @@ config TP_SIMULATE_SWITCH
 
 	  If you donnot, say N.
 
-if TOUCHSCREEN_MTK_FT5406
+if TOUCHSCREEN_MTK_FT5346
 
-config FT5406_FIRMWARE
-	string "FT5406 for Mediatek firmware"
+config FT5346_FIRMWARE
+	string "FT5346 for Mediatek firmware"
 
 config TPD_ROTATE_90
-	bool "ft5406 for Mediatek package"
+	bool "ft5346 for Mediatek package"
 	default n
 	help
-	Say Y here if you have ft5406 touch panel TPD_ROTATE_90.
+	Say Y here if you have ft5346 touch panel TPD_ROTATE_90.
 
 	If unsure, say N.
 
@@ -27,10 +27,10 @@ config TPD_ROTATE_90
 	module will be called.
 
 config TPD_ROTATE_180
-	bool "ft5406 for Mediatek package"
+	bool "ft5346 for Mediatek package"
 	default n
 	help
-	Say Y here if you have ft5406 touch panel TPD_ROTATE_180.
+	Say Y here if you have ft5346 touch panel TPD_ROTATE_180.
 
 	If unsure, say N.
 
@@ -38,10 +38,10 @@ config TPD_ROTATE_180
 	module will be called.
 
 config TPD_ROTATE_270
-	bool "ft5406 for Mediatek package"
+	bool "ft5346 for Mediatek package"
 	default n
 	help
-	Say Y here if you have ft5406 touch panel TPD_ROTATE_270.
+	Say Y here if you have ft5346 touch panel TPD_ROTATE_270.
 
 	If unsure, say N.
 
@@ -49,10 +49,10 @@ config TPD_ROTATE_270
 	module will be called.
 
 config FT_AUTO_UPGRADE_SUPPORT
-	bool "ft5406 for Mediatek package"
+	bool "ft5346 for Mediatek package"
 	default n
 	help
-	Say Y here if you have ft5406 touch panel FT_AUTO_UPGRADE_SUPPORT.
+	Say Y here if you have ft5346 touch panel FT_AUTO_UPGRADE_SUPPORT.
 
 	If unsure, say N.
 
@@ -60,10 +60,10 @@ config FT_AUTO_UPGRADE_SUPPORT
 	module will be called.
 
 config CUST_FTS_APK_DEBUG
-	bool "ft5406 for Mediatek package"
+	bool "ft5346 for Mediatek package"
 	default n
 	help
-	Say Y here if you have ft5406 touch panel CUST_FTS_APK_DEBUG.
+	Say Y here if you have ft5346 touch panel CUST_FTS_APK_DEBUG.
 
 	If unsure, say N.
 
@@ -71,10 +71,10 @@ config CUST_FTS_APK_DEBUG
 	module will be called.
 
 config TPD_HAVE_CALIBRATION
-	bool "ft5406 for Mediatek package"
+	bool "ft5346 for Mediatek package"
 	default n
 	help
-	Say Y here if you have ft5406 touch panel TPD_HAVE_CALIBRATION.
+	Say Y here if you have ft5346 touch panel TPD_HAVE_CALIBRATION.
 
 	If unsure, say N.
 
@@ -82,10 +82,10 @@ config TPD_HAVE_CALIBRATION
 	module will be called.
 
 config TPD_CUSTOM_CALIBRATION
-	bool "ft5406 for Mediatek package"
+	bool "ft5346 for Mediatek package"
 	default n
 	help
-	Say Y here if you have ft5406 touch panel TPD_CUSTOM_CALIBRATION.
+	Say Y here if you have ft5346 touch panel TPD_CUSTOM_CALIBRATION.
 
 	If unsure, say N.
 

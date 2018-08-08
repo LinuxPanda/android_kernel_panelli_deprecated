@@ -150,18 +150,18 @@ config TOUCHSCREEN_MTK_FT5X0X
 
 source "drivers/input/touchscreen/mediatek/ft5x0x/Kconfig"
 
-config TOUCHSCREEN_MTK_FT5406
-	bool "FT5406 for Mediatek package"
+config TOUCHSCREEN_MTK_FT5346
+	bool "FT5346 for Mediatek package"
 	default n
 	help
-	  Say Y here if you have FT5406 touch panel.
+	  Say Y here if you have FT5346 touch panel.
 
 	  If unsure, say N.
 
 	  To compile this dirver as a module, choose M here: the
 	  module will be called.
 
-source "drivers/input/touchscreen/mediatek/ft5406/Kconfig"
+source "drivers/input/touchscreen/mediatek/ft5346/Kconfig"
 
 config TOUCHSCREEN_MTK_SYNAPTICS_3320_50
 	bool "Synaptics 5.0inch for Mediatek package"

@@ -406,6 +406,10 @@ KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -march=armv7-a -mfpu=neon \
 		   -mfloat-abi=softfp -mtune=cortex-a53
 
+# -march=armv8-a -mcpu=cortex-a53
+# 		   -march=armv7-a -mfpu=neon \
+# 		   -mfloat-abi=softfp -mtune=cortex-a53
+
 # Pipe makes the compilation process faster (Disable if GCC crashes)
 KBUILD_CFLAGS	+= -pipe
 
@@ -625,14 +629,19 @@ else
 KBUILD_CFLAGS	+= -O2
 endif
 
-# Disable MTK drivers warnings being flagged as errors
+# Disable Mediatek MTK drivers warnings being flagged as errors in GCC 6
 KBUILD_CFLAGS += $(call cc-disable-warning,date-time)
 KBUILD_CFLAGS += $(call cc-disable-warning,duplicate-decl-specifier)
-KBUILD_CFLAGS	+= $(call cc-disable-warning,int-in-bool-context)
+KBUILD_CFLAGS += $(call cc-disable-warning,int-in-bool-context)
 KBUILD_CFLAGS += $(call cc-disable-warning,logical-not-parentheses)
 KBUILD_CFLAGS += $(call cc-disable-warning,misleading-indentation)
 KBUILD_CFLAGS += $(call cc-disable-warning,switch-bool)
 KBUILD_CFLAGS += $(call cc-disable-warning,unused-but-set-variable)
+# Extra flags for GCC 7
+KBUILD_CFLAGS += $(call cc-disable-warning,format-overflow)
+KBUILD_CFLAGS += $(call cc-disable-warning,format-truncation)
+KBUILD_CFLAGS += $(call cc-disable-warning,unused-but-set-variable)
+KBUILD_CFLAGS += $(call cc-disable-warning,uninitialized)
 
 # Tell gcc to never replace conditional load with a non-conditional one
 KBUILD_CFLAGS	+= $(call cc-option,--param=allow-store-data-races=0)
