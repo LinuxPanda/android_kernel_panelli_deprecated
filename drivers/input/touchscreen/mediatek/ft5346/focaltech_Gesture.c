@@ -71,8 +71,10 @@
 #define GESTURE_Z                               0x41
 #define GESTURE_C                               0x34
 #define FTS_GESTRUE_POINTS                      255
+#define FTS_GESTRUE_POINTS_ONETIME  		62
 #define FTS_GESTRUE_POINTS_HEADER               8
 #define FTS_GESTURE_OUTPUT_ADRESS               0xD3
+#define FTS_GESTURE_OUTPUT_UNIT_LENGTH 	4
 
 /*******************************************************************************
 * Private enumerations, structures and unions using typedef

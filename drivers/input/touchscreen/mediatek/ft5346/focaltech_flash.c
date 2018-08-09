@@ -1960,7 +1960,7 @@ int  fts_5x46_ctpm_fw_upgrade(struct i2c_client * client, u8* pbt_buf, u32 dw_le
 			bt_ecc ^= packet_buf[6 + i];
 		}
 		fts_i2c_write(client, packet_buf, FTS_PACKET_LENGTH + 6);
-		msleep(20);
+		msleep(10); //qiumeng@wind-mobi.com 20161129
 		/*
 		for(i = 0;i < 30;i++)
 		{

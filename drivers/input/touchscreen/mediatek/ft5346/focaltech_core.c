@@ -1696,6 +1696,12 @@ static void tpd_suspend(struct device *h)
 		TPD_DMESG("Failed to disable reg-vgp6: %d\n", retval);
 
 #endif
+//tuwenzan@wind-mobi.com modify at 20160608 begin
+/*release all touch points*/
+input_report_key(tpd->dev, BTN_TOUCH, 0);
+input_mt_sync(tpd->dev);
+input_sync(tpd->dev);
+//tuwenzan@wind-mobi.com modify at 20160608 end
 }
 
 static struct tpd_driver_t tpd_device_driver = {
