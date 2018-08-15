@@ -120,9 +120,25 @@
 		vib_vol= <5>;
 	};
  /* sensor standardization */
+//qiumeng@wind-mobi.com begin at 20161109
 		cust_accel@0 {
-		compatible				= "mediatek,mc3410";
+		compatible				= "mediatek,kxtj2_1009_new";
 		i2c_num				= <2>;
+		i2c_addr				= <0x0e 0 0 0>;
+//modify g-sensor direction ---qiumeng@wind-mobi.com begin at 20161110
+		direction				= <5>; //0
+//modify g-sensor direction ---qiumeng@wind-mobi.com end at 20161110
+		power_id				= <0xffff>;
+		power_vol				= <0>;
+		firlen					= <0>;
+		is_batch_supported			= <0>;
+		};
+//qiumeng@wind-mobi.com end at 20161109
+
+		//sunsiyuan@wind-mobi.com add at 20161207 begin
+		cust_accel@1 {
+		compatible				= "mediatek,MC3410";
+		i2c_num					= <2>;
 		i2c_addr				= <0x4c 0 0 0>;
 		direction				= <7>;
 		power_id				= <0xffff>;
@@ -130,7 +146,8 @@
 		firlen					= <0>;
 		is_batch_supported			= <0>;
 		};
-
+		//sunsiyuan@wind-mobi.com add at 20161207 end
+		
 		cust_alsps@0 {
 		compatible				= "mediatek,cm36652";
 		i2c_num				= <2>;
