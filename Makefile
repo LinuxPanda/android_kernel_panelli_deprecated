@@ -406,7 +406,10 @@ KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -march=armv7-a -mfpu=neon \
 		   -mfloat-abi=softfp -mtune=cortex-a53
 
+# For 64bit
 # -march=armv8-a -mcpu=cortex-a53
+
+# For 32bit
 # 		   -march=armv7-a -mfpu=neon \
 # 		   -mfloat-abi=softfp -mtune=cortex-a53
 
@@ -640,6 +643,8 @@ KBUILD_CFLAGS += $(call cc-disable-warning,unused-but-set-variable)
 # Extra flags for GCC 7
 KBUILD_CFLAGS += $(call cc-disable-warning,format-overflow)
 KBUILD_CFLAGS += $(call cc-disable-warning,format-truncation)
+KBUILD_CFLAGS += $(call cc-disable-warning,memset-elt-size)
+KBUILD_CFLAGS += $(call cc-disable-warning,stringop-overflow)
 KBUILD_CFLAGS += $(call cc-disable-warning,unused-but-set-variable)
 KBUILD_CFLAGS += $(call cc-disable-warning,uninitialized)
 

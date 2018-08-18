@@ -75,6 +75,8 @@ stCAM_CAL_LIST_STRUCT g_camCalList[] = {
 	{S5K2P8_SENSOR_ID, 0xA2, CMD_AUTO, cam_cal_check_mtk_cid},/*J main */
 	{OV8858_SENSOR_ID, 0xA2, CMD_AUTO, cam_cal_check_mtk_cid},/*J sub */
 
+	{IMX219_SENSOR_ID, 0xA0, CMD_AUTO, cam_cal_check_mtk_cid},/*panelli*/
+	{S5K4H8_SENSOR_ID, 0xA0, CMD_AUTO, cam_cal_check_mtk_cid},/*panelli*/
 	/*  ADD before this line */
 	{0, 0, CMD_NONE, 0} /*end of list*/
 };
