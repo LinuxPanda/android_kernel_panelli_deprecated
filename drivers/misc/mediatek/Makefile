@@ -174,7 +174,7 @@ obj-$(CONFIG_MTK_RAM_CONSOLE)	+= ram_console/
 #obj-$(CONFIG_MTK_SVP) += memory-ssvp/
 #obj-$(CONFIG_ZONE_MOVABLE_CMA) += zone_movable_cma/
 
-#obj-y += performance/
+obj-y += performance/
 
 # gator driver is platform-independent
 ifneq ($(wildcard $(srctree)/$(src)/gator-driver/),)
