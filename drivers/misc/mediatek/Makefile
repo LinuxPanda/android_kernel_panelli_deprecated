@@ -29,21 +29,19 @@ obj-$(CONFIG_MTK_IRQ) += irq/
 obj-$(CONFIG_MTK_SYS_CIRQ) += cirq/
 obj-$(CONFIG_MTK_GIC_EXT) += ext_gic/
 obj-$(CONFIG_MTK_FIQ_CACHE) += fiq_cache/
-#obj-$(CONFIG_MTK_ICE_DEBUG) +=ice_debug/
-#obj-$(CONFIG_MTK_NFC) += nfc/
-##add sar -----shenyong@wind-mobi.com start 
-obj-$(CONFIG_INPUT_SX9310) += sar/
-##add sar -----shenyong@wind-mobi.com end
-#obj-$(CONFIG_MMPROFILE) += mmp/
+obj-$(CONFIG_MTK_ICE_DEBUG) +=ice_debug/
+obj-$(CONFIG_MTK_NFC) += nfc/
+obj-$(CONFIG_MMPROFILE) += mmp/
 obj-$(CONFIG_MTK_AUXADC)	+= auxadc/
 obj-$(CONFIG_MTK_M4U)	+= m4u/
 obj-$(CONFIG_MTK_GPT_SCHEME_SUPPORT)	+= partition/
 obj-$(CONFIG_MTK_SYSENV)	+= sysenv/
 obj-$(CONFIG_MTK_PWM)	    += pwm/
-obj-$(CONFIG_MTK_HWMON)	    += hwmon/
 ifneq ($(CONFIG_MTK_SENSOR_BIO),y)
 ifeq ($(CONFIG_MTK_SENSOR_SUPPORT),y)
 obj-$(CONFIG_CUSTOM_KERNEL_SENSORHUB)	+= sensorHub/
+obj-$(CONFIG_MTK_HWMON)	    += hwmon/
+obj-$(CONFIG_MTK_CAM_CAL) += cam_cal/src/
 obj-$(CONFIG_CUSTOM_KERNEL_ALSPS) += alsps/
 obj-$(CONFIG_CUSTOM_KERNEL_ACCELEROMETER) += accelerometer/
 obj-$(CONFIG_CUSTOM_KERNEL_GYROSCOPE) += gyroscope/
@@ -76,25 +74,23 @@ endif
 else
 obj-y   += sensor_bio/
 endif
-ifeq ($(CONFIG_MTPROF),y)
 obj-$(CONFIG_MTPROF)	+= mtprof/
-endif
 ifeq ($(CONFIG_MTK_I2C_EXTENSION),y)
 obj-$(CONFIG_MTK_I2C)  += i2c/
 endif
 obj-$(CONFIG_MTK_LEDS)	+= leds/
 obj-$(CONFIG_CUSTOM_KERNEL_CHARGEPUMP) += chargepump/
 obj-$(CONFIG_MTK_VIBRATOR)	+= vibrator/
-#obj-$(CONFIG_MTK_SM100)	+= tc1_interface/vib_drv/
+obj-$(CONFIG_MTK_SM100)	+= tc1_interface/vib_drv/
 obj-$(CONFIG_MTK_ACCDET)	+= accdet/
 obj-$(CONFIG_MTK_ECCCI_C2K) += c2k_usb/
 obj-y += irtx/
-#obj-$(CONFIG_MTK_IR_LEARNING_SUPPORT) += ir_learning/
+obj-$(CONFIG_MTK_IR_LEARNING_SUPPORT) += ir_learning/
 obj-$(CONFIG_MTK_VIDEOCODEC_DRIVER) += videocodec/
 obj-$(CONFIG_MTK_JPEG)	+= jpeg/
 obj-$(CONFIG_MTK_RTC)	+= rtc/
 obj-$(CONFIG_MTK_PMIC)	+= power/
-#obj-$(CONFIG_MTK_PMIC_NEW_ARCH)	+= pmic/
+obj-$(CONFIG_MTK_PMIC_NEW_ARCH)	+= pmic/
 obj-$(CONFIG_MTK_PMIC_WRAP) += pmic_wrap/
 obj-$(CONFIG_USB_MTK_HDRC) += usb20/
 obj-$(CONFIG_MTK_USBFSH) += usb11/
@@ -102,22 +98,22 @@ obj-$(CONFIG_MU3_PHY)	+= mu3phy/
 obj-$(CONFIG_USB_MU3D_DRV)	+= mu3d/
 obj-$(CONFIG_SSUSB_DRV) += ssusb/
 obj-$(CONFIG_USB_XHCI_MTK)	+= xhci/
-#obj-$(CONFIG_USB_C_SWITCH)	+= usb_c/
+obj-$(CONFIG_USB_C_SWITCH)	+= usb_c/
 obj-$(CONFIG_MTK_GPIO) += gpio/
 obj-$(CONFIG_SECURITY_SELINUX)	+= selinux_warning/
 obj-$(CONFIG_MTK_MEM) += mem/
-#obj-$(CONFIG_MTK_MEMORY_LOWPOWER) += memory-lowpower/
-#obj-$(CONFIG_MTK_DCS) += mtkdcs/
+obj-$(CONFIG_MTK_MEMORY_LOWPOWER) += memory-lowpower/
+obj-$(CONFIG_MTK_DCS) += mtkdcs/
 obj-$(CONFIG_MTK_CMDQ) += cmdq/
 obj-$(CONFIG_MTK_BOOT) += boot/
 obj-$(CONFIG_MTK_BOOT_REASON) += boot_reason/
 obj-$(CONFIG_MTK_CHIP) += chip/
 obj-$(CONFIG_MTK_DEVAPC_DRIVER) += devapc/
 obj-$(CONFIG_MTK_DEVINFO_DRIVER) += devinfo/
-#obj-$(CONFIG_MTK_DEVINFO_DRIVER_V2) += devinfo/
+obj-$(CONFIG_MTK_DEVINFO_DRIVER_V2) += devinfo/
 obj-$(CONFIG_MTK_LCM) += lcm/
 obj-$(CONFIG_MTK_LCM) += ext_disp/
-#obj-$(CONFIG_MTK_HDMI_SUPPORT) += hdmi/
+obj-$(CONFIG_MTK_HDMI_SUPPORT) += hdmi/
 obj-$(CONFIG_MTK_FB) += video/
 obj-$(CONFIG_MTK_GPU_SUPPORT) += gpu/
 obj-$(CONFIG_MTK_SMI_EXT)	+= smi/
@@ -131,7 +127,6 @@ obj-y += cameraisp/src/
 ifneq ($(CONFIG_MTK_IMGSENSOR),)
 obj-y+= imgsensor/src/
 endif
-obj-$(CONFIG_MTK_CAM_CAL) += cam_cal/src/
 obj-$(CONFIG_MTK_LENS)   += lens/
 obj-$(CONFIG_MTK_FLASHLIGHT)	+= flashlight/src/
 ifneq ($(wildcard $(srctree)/drivers/misc/mediatek/met/),)
@@ -161,18 +156,18 @@ endif
 obj-$(CONFIG_TRUSTONIC_TEE_SUPPORT) += gud/
 obj-$(CONFIG_TRUSTONIC_TEE_SUPPORT) += secmem/
 obj-$(CONFIG_MICROTRUST_TEE_SUPPORT) += teei/
-#obj-$(CONFIG_MTK_DEBUG_LATCH)	+= debug_latch/
-#obj-$(CONFIG_MTK_DEBUG_TRACER)	+= debug_tracer/
-#obj-$(CONFIG_MTK_WATCHPOINT) += watchpoint/
-#obj-$(CONFIG_MTK_SYSTRACKER)   += systracker/
+obj-$(CONFIG_MTK_DEBUG_LATCH)	+= debug_latch/
+obj-$(CONFIG_MTK_DEBUG_TRACER)	+= debug_tracer/
+obj-$(CONFIG_MTK_WATCHPOINT) += watchpoint/
+obj-$(CONFIG_MTK_SYSTRACKER)   += systracker/
 obj-$(CONFIG_MTK_RAM_CONSOLE)	+= ram_console/
-#obj-$(CONFIG_MTK_DRAM_LOG_STORE)	+= log_store/
-#obj-$(CONFIG_MTK_EXTMEM) += exm/
-#obj-$(CONFIG_RT_REGMAP) += rt-regmap/
-#obj-$(CONFIG_TCPC_CLASS) += pd/
+obj-$(CONFIG_MTK_DRAM_LOG_STORE)	+= log_store/
+obj-$(CONFIG_MTK_EXTMEM) += exm/
+obj-$(CONFIG_RT_REGMAP) += rt-regmap/
+obj-$(CONFIG_TCPC_CLASS) += pd/
 
-#obj-$(CONFIG_MTK_SVP) += memory-ssvp/
-#obj-$(CONFIG_ZONE_MOVABLE_CMA) += zone_movable_cma/
+obj-$(CONFIG_MTK_SVP) += memory-ssvp/
+obj-$(CONFIG_ZONE_MOVABLE_CMA) += zone_movable_cma/
 
 obj-y += performance/
 
@@ -187,24 +182,24 @@ obj-$(CONFIG_TRUSTY) += trustzone/
 endif
 
 obj-$(CONFIG_THERMAL)   += thermal/
-#obj-$(CONFIG_MTK_MULTIBRIDGE_SUPPORT) += multibridge/
+obj-$(CONFIG_MTK_MULTIBRIDGE_SUPPORT) += multibridge/
 obj-$(CONFIG_MEDIATEK_SOLUTION)	+= aee/
 obj-$(CONFIG_MTK_ATF_LOGGER)	+= atf_log/
 obj-$(CONFIG_MTK_MLOG) += mlog/
 obj-$(CONFIG_MTK_EMI_BWL)	+= emi_bwl/
-obj-$(CONFIG_MTK_EMI_MBW) += emi_mbw/
 obj-$(CONFIG_MTK_EMI_MPU)	+= emi_mpu/
-#obj-$(CONFIG_MTK_MJC_DRIVER)	+= mjc/
-#obj-$(CONFIG_MD32_SUPPORT)     += md32/
+obj-$(CONFIG_MTK_MJC_DRIVER)	+= mjc/
+obj-$(CONFIG_MD32_SUPPORT)     += md32/
+obj-$(CONFIG_MTK_EMI_MBW) += emi_mbw/
 ifneq ($(wildcard $(srctree)/drivers/misc/mediatek/tc1_interface/),)
 obj-$(CONFIG_MTK_TC1_FEATURE)   += tc1_interface/
 endif
 obj-$(CONFIG_MTK_BTCVSD) += btcvsd/
 obj-$(CONFIG_MTK_MTD_NAND) += nand/
 obj-$(CONFIG_MTK_DUM_CHAR) += dum-char/
-#obj-$(CONFIG_MTK_DYNAMIC_BOOST) += dynamic_boost/
+obj-$(CONFIG_MTK_DYNAMIC_BOOST) += dynamic_boost/
 
-#obj-$(CONFIG_MTK_DISPLAY_120HZ_SUPPORT)	+= rrc/
+obj-$(CONFIG_MTK_DISPLAY_120HZ_SUPPORT)	+= rrc/
 obj-$(CONFIG_MTK_USB2JTAG_SUPPORT) += usb2jtag/
 # Crypto performance tools (disable by default)
 obj-n += crypto/
@@ -220,6 +215,6 @@ endif
 obj-$(CONFIG_MTK_VOW_SUPPORT)	+= vow/
 obj-$(CONFIG_USB)	+= usb_boost/
 obj-$(CONFIG_RT_REGMAP) += rt-regmap/
-## add wind_device_info for A158---qiumeng@wind-mobi.com 20161123 begin
+## add wind_device_info for A158---lenovo@lenovo.com 20161123 begin
 obj-$(CONFIG_WIND_DEVICE_INFO) += wind_device_info/
-## add wind_device_info for A158---qiumeng@wind-mobi.com 20161123 end
+## add wind_device_info for A158---lenovo@lenovo.com 20161123 end
