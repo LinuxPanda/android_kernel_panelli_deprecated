@@ -1,5 +1,3 @@
-## Kernel Tree for Motorola Moto C Plus [panelli]
-
 This tree won't be updated anymore.
 
 I may add important commits to this repo for reference. Apart from that I won't be building anymore kernels based on this tree.
